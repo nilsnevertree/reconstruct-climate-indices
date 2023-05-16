@@ -32,20 +32,20 @@ import random
 
 import matplotlib.pyplot as plt
 import numpy as np
+import xarray as xr
 
 from matplotlib import pyplot as plt
-from scipy.io import loadmat, savemat
 
 
 # Numerical parameter
-nt = 500  # number of timestep
-dt = 30  # 365.25 # (days) time step
+nt = 1000  # number of timestep
+dt = 365.25  # 365.25 # (days) time step
 dW = np.sqrt(dt)  # (sqrt (days)) Stochastic time step
 
 # Physical parameters
 tau0 = 10 * 365.25  # (days) ocean restoring timescale
 per0 = 24 * 365.25  # (days) ocean oscillation timescale
-df = 1.15e-3  # (K days-1/2) stochastic forcing intensity
+df = 1.15e-1  # (K days-1/2) stochastic forcing intensity
 
 # Precomputation
 l0 = 2 / tau0  # (days-1) inverse restoring timescale
@@ -74,6 +74,45 @@ for it in np.arange(1, nt):
 timep = time / 365.25  # (yr) TIME for plot
 
 # Figure
+
+# create a xarray to store the data as netcdf file
+
+models = ["sponge", "oscillator"]
+desciption = """Data created by a idealized ocean model.
+It includes two model runs.
+surface_air_temperature is used as forcing for both models.
+Models:
+- sponge: Sponge Ocean without interior oscillation.
+- oscillator: Oscillting Ocean of two layer with interior oscillation between surface and deep ocean.
+"""
+
+ds = xr.Dataset(
+    coords=dict(
+        time=(["time"], time),
+        model=(["model"], models),
+        time_years=(["time"], timep),
+    ),
+    data_vars=dict(
+        surface_air_temperature=(["time"], SAT),
+        sea_surface_temperature=(
+            ["time", "model"],
+            np.array([SST_spg, SST_osc]).swapaxes(0, 1),
+        ),
+        sponge_sea_surface_temperature=(["time"], SST_spg),
+        oscillator_sea_surface_temperature=(["time"], SST_osc),
+        oscillator_deep_ocean_temperature=(["time"], DOT_osc),
+    ),
+    attrs=dict(
+        coder="Florian Sévellec <florian.sevellec@univ-brest.fr>",
+        description=desciption,
+        ocean_restoring_timescale=f"{tau0} in days",
+        ocean_oscillation_timescale=f"{per0} in days",
+        stochastic_forcing_intensity=rf"{df} in (K days^(-1/2))",
+    ),
+)
+
+print(ds)
+ds.to_netcdf("..\\data\idealized_ocean_model.nc", mode="w")
 
 fig1, (ax1, ax2) = plt.subplots(nrows=2)
 ax1.set_ylabel("SAT (K days-1/2)")
