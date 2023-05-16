@@ -90,3 +90,6 @@ target/
 
 # Temporary folder to store untracked files
 temporary/*
+
+# Figures in results folder
+results/*
