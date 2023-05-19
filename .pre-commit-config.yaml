@@ -72,8 +72,12 @@ repos:
     rev: 0.6.1
     hooks:
     -   id: nbstripout
+        args:
+          [
+            --max-size=1k
+          ]
 
-    # Last check if any large files exist
+  # Check on large files as last hook
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
