@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def my_mean(x):
     """Calculate the mean of a numpy array using np.mean
     This functions only purpose is to check the CI workflows of the repository.
