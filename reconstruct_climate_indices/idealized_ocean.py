@@ -1,3 +1,4 @@
+#%%
 # idealized.ipynb
 # DESCRIPTION
 # -----------
@@ -27,14 +28,76 @@
 # CODE
 # ----
 # Import libray
-import math
-import random
 
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 
 from matplotlib import pyplot as plt
+
+#%%
+class idealized_ocean_model():
+    default_seed=331381460666,
+
+    def __init__(
+            self,
+            time_steps=1000,
+            dt=365.25,
+            df=1.15e-1,
+            ) -> None:
+        
+        # Set up the settings of the model
+        self.time_steps = time_steps 
+        self.dt=dt
+        self.df=df
+        self.dW = np.sqrt(dt)
+
+        # Set up the variables of the model
+        self._create_stochastic_forcing_()
+        self._create_variables_()
+
+
+    def _create_variables_(self):
+        pass
+
+    def _create_stochastic_forcing_(self) :
+        self.forcing = np.random.default_rng(seed=idealized_ocean_model.default_seed).normal(0, self.df, self.time_steps)
+
+    def _add_setting_(self, name):
+        for current_setting in settings:
+            self.current_setting = settings[current_setting]
+
+    def integrate(self):
+        pass
+
+class spunge_ocean_model(idealized_ocean_model):
+
+    def __init__(
+            self,
+            time_steps=1000,
+            dt=365.25,
+            df = 1.15e-1,
+            tau0=10 * 365.25,
+        ):
+        super().__init__(
+            time_steps = time_steps, 
+            dt=dt,
+            df=df,
+        )
+        self._create_variables_()
+        self._set_settings_(dict(tau0=tau0))
+
+    def _create_variables_(self) :
+        self.SAT = np.zeros(self.time_steps)
+        self.SST = np.zeros(self.time_steps)
+    
+    def integrate(self) :
+        for it in np.arange(1, self.time_steps):
+            self.SAT[it] = self.forcing[it]
+            self.SST[it] = self.SST[it-1] + (-l0 * SST_spg[it - 1]) * dt + (SAT[it - 1]) * dW
+    
+
+#%%
 
 
 def integrate_idealized_ocean(
@@ -138,48 +201,3 @@ def integration_to_netcdf(time, timep, SAT, SST_spg, SST_osc, DOT_osc, tau0, per
         ),
     )
     return ds
-
-
-def plot_idealized_results(timep, SAT, SST_spg, SST_osc, DOT_osc):
-    fig1, (ax1, ax2) = plt.subplots(nrows=2)
-    ax1.set_ylabel("SAT (K days-1/2)")
-    ax1.set_xlabel("TIME (years)")
-    ax1.set_title("SPUNGE OCEAN")
-    ax1.plot(timep[0:nt], SAT[0:nt], c="blue")
-    ax1.set_xlim(min(timep), max(timep))
-    varlim1 = np.max(abs(SAT))
-    ax1.set_ylim(-varlim1, varlim1)
-    ax1.grid()
-    ax2.set_ylabel("SST(K)")
-    ax2.set_xlabel("TIME (years)")
-    ax2.plot(timep[0:nt], SST_spg[0:nt], c="red")
-    ax2.set_xlim(min(timep), max(timep))
-    varlim2 = np.max(abs(SST_spg))
-    ax2.set_ylim(-varlim2, varlim2)
-    ax2.grid()
-
-    fig2, (ax1, ax2, ax3) = plt.subplots(nrows=3)
-    ax1.set_ylabel("SAT (K days-1/2)")
-    ax1.set_xlabel("TIME (years)")
-    ax1.set_title("OSCILLATORY OCEAN")
-    ax1.plot(timep[0:nt], SAT[0:nt], c="blue")
-    ax1.set_xlim(min(timep), max(timep))
-    varlim1 = np.max(abs(SAT))
-    ax1.set_ylim(-varlim1, varlim1)
-    ax1.grid()
-    ax2.set_ylabel("SST(K)")
-    ax2.set_xlabel("TIME (years)")
-    ax2.plot(timep[0:nt], SST_osc[0:nt], c="red")
-    ax2.set_xlim(min(timep), max(timep))
-    varlim2 = np.max(abs(SST_osc))
-    ax2.set_ylim(-varlim2, varlim2)
-    ax2.grid()
-    ax3.set_ylabel("DOT(K)")
-    ax3.set_xlabel("TIME (years)")
-    ax3.plot(timep[0:nt], DOT_osc[0:nt], c="red")
-    ax3.set_xlim(min(timep), max(timep))
-    varlim3 = np.max(abs(DOT_osc))
-    ax3.set_ylim(-varlim3, varlim3)
-    ax3.grid()
-
-    plt.show()
