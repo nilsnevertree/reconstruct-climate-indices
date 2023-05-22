@@ -1,10 +1,7 @@
-import weakref
-
 import numpy as np
 import pytest
 
 from reconstruct_climate_indices.statistics import my_mean
-from numpy.testing import assert_almost_equal
 
 
 # Test data
