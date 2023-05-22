@@ -19,7 +19,6 @@ Project Organization
     ├───src
     ├───temporary
     └───tests
---------
 
 ### Usage of Kalman Algorthims
 For this you need to install the [kalman-reconstruction](https://github.com/nilsnevertree/kalman-reconstruction-partially-observered-systems) library.
