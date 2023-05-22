@@ -29,6 +29,7 @@
 # ----
 # Import libray
 
+import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 
@@ -38,7 +39,7 @@ import xarray as xr
 def spunge_ocean(nt=1000,
     dt=365.25,
     df=1.15e-1,
-    tau0=24 * 365.25,
+    tau0=10 * 365.25,
     save_path=None,
     seed=331381460666):
 
@@ -87,12 +88,11 @@ def spunge_ocean(nt=1000,
         return ds
 
 
-def oscillator_ocean(nt=1000,
+def oscillatory_ocean(nt=1000,
     dt=365.25,
     df=1.15e-1,
-    per0=10 * 365.25,
-    tau0=24 * 365.25,
-
+    per0=24 * 365.25,
+    tau0=10 * 365.25,
     save_path=None,
     seed=331381460666):
 
@@ -148,6 +148,75 @@ def oscillator_ocean(nt=1000,
         return ds
 
 
+def realistic_AMO_oscillatory_ocean(nt=1000,
+    dt=365.25,
+    per0=24 * 365.25,
+    tau0=10 * 365.25,
+    dNAO = 0.1, # (K days-1/2) stochastic amplitude of NAO
+    dEAP = 0.1, # (K days-1/2) stochastic amplitude of EAP
+    cNAOvsEAP = 0, # (K^2 days) Covariance of NAO and EAP
+    save_path=None,
+    seed=331381460666):
+
+    dW = np.sqrt(dt)  # (sqrt (days)) Stochastic time step
+
+    # Precomputation
+    l0 = 2 / tau0  # (days-1) inverse restoring timescale
+    o0 = 2 * 3.14 / per0  # (days-1) inverse oscillation timescale
+    A=[[dNAO**2,cNAOvsEAP],[cNAOvsEAP,dEAP**2]]# Covariance Matrix of ztmospheric forcing
+    L=np.linalg.cholesky(A) # Cholesky factorization of the Covariance Matrix
+
+    # Initialization
+    NAO = np.zeros(nt)
+    EAP = np.zeros(nt)
+    AMO = np.zeros(nt)
+    ZOT = np.zeros(nt)
+    time = np.zeros(nt)
+
+    rng = np.random.default_rng(seed=seed)
+
+    # Time Loop
+    for it in np.arange(1, nt):
+        time[it] = time[it - 1] + dt
+        # AMO-type Ocean oscillation
+        ft=rng.standard_normal(2)
+        ftt=np.matmul(ft, A)
+        NAO[it] = ftt[0]
+        EAP[it] = ftt[1]
+        AMO[it] = (
+            AMO[it - 1] + (-l0 * AMO[it - 1] - o0 * ZOT[it - 1]) * dt + (EAP[it - 1]) * dW
+        )
+        ZOT[it] = (
+            ZOT[it - 1] + (-l0 * ZOT[it - 1] + o0 * AMO[it - 1]) * dt + (NAO[it - 1]) * dW
+        )
+        timep = time / 365.25  # (yr) TIME for plot
+
+
+    ds = xr.Dataset(
+    coords=dict(
+        time=(["time"], time),
+        time_years=(["time"], timep),
+        dEAP= (["dEAP"], [dEAP]),
+        dNAO= (["dNAO"], [dNAO]),
+        cNAOvsEAP= (["cNAOvsEAP"], [cNAOvsEAP]),
+        ),
+        data_vars=dict(
+            NAO=(["time", "dEAP", "dEAP", "cNAOvsEAP"], NAO[:, np.newaxis, np.newaxis, np.newaxis]),
+            EAP=(["time", "dEAP", "dEAP", "cNAOvsEAP"], EAP[:, np.newaxis, np.newaxis, np.newaxis]),
+            ZOT=(["time", "dEAP", "dEAP", "cNAOvsEAP"], ZOT[:, np.newaxis, np.newaxis, np.newaxis]),
+            AMO=(["time", "dEAP", "dEAP", "cNAOvsEAP"], AMO[:, np.newaxis, np.newaxis, np.newaxis]),
+        ),
+        attrs=dict(
+            coder="Florian Sévellec <florian.sevellec@univ-brest.fr>",
+        ),
+    )
+
+    if save_path is not None:
+        ds.to_netcdf(save_path, mode="w")
+    else:
+        return ds
+
+
 def integrate_idealized_ocean(
     time_steps=1000,
     dt=365.25,
@@ -164,7 +233,7 @@ def integrate_idealized_ocean(
                           seed=seed,
                           save_path=None
                           )
-    oscillator = oscillator_ocean(nt=time_steps,
+    oscillator = oscillatory_ocean(nt=time_steps,
                           dt=dt,
                           df=stochastic_forcing_intensity,
                           tau0=ocean_restoring_timescale,
@@ -178,3 +247,50 @@ def integrate_idealized_ocean(
         ds.to_netcdf(save_path, mode="w")
     else:
         return ds
+
+
+def integrate_all(
+    time_steps=1000,
+    dt=365.25,
+    stochastic_forcing_intensity=1.15e-1,
+    ocean_restoring_timescale=10 * 365.25,
+    ocean_oscillation_timescale=24 * 365.25,
+    dNAO = 0.1, # (K days-1/2) stochastic amplitude of NAO
+    dEAP = 0.1, # (K days-1/2) stochastic amplitude of EAP
+    cNAOvsEAP = 0, # (K^2 days) Covariance of NAO and EAP
+    save_path=None,
+    seed=331381460666,
+):
+    spunge = spunge_ocean(nt=time_steps,
+                          dt=dt,
+                          df=stochastic_forcing_intensity,
+                          tau0=ocean_restoring_timescale,
+                          seed=seed,
+                          save_path=None
+                          )
+    oscillator = oscillatory_ocean(nt=time_steps,
+                          dt=dt,
+                          df=stochastic_forcing_intensity,
+                          tau0=ocean_restoring_timescale,
+                          per0=ocean_oscillation_timescale,
+                          seed=seed,
+                          save_path=None
+                          )
+    rossby  = realistic_AMO_oscillatory_ocean(
+        nt=time_steps,
+        dt=dt,
+        tau0=ocean_restoring_timescale,
+        per0=ocean_oscillation_timescale,
+        dNAO = dNAO, # (K days-1/2) stochastic amplitude of NAO
+        dEAP = dEAP, # (K days-1/2) stochastic amplitude of EAP
+        cNAOvsEAP = cNAOvsEAP,
+        seed=seed,
+        save_path=None
+    )
+    ds = xr.merge([spunge, oscillator, rossby])
+
+    if save_path is not None:
+        ds.to_netcdf(save_path, mode="w")
+    else:
+        return ds
+# %%
