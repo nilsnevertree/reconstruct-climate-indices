@@ -1,3 +1,4 @@
+#%%
 # idealized.ipynb
 # DESCRIPTION
 # -----------
@@ -27,14 +28,124 @@
 # CODE
 # ----
 # Import libray
-import math
-import random
 
-import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 
-from matplotlib import pyplot as plt
+
+#%%
+
+def spunge_ocean(nt=1000,
+    dt=365.25,
+    df=1.15e-1,
+    tau0=24 * 365.25,
+    save_path=None,
+    seed=331381460666):
+
+    dW = np.sqrt(dt)  # (sqrt (days)) Stochastic time step
+
+    # Precomputation
+    l0 = 2 / tau0  # (days-1) inverse restoring timescale
+
+    # Initialization
+    SAT = np.zeros(nt)
+    SST = np.zeros(nt)
+    time = np.zeros(nt)
+
+    random_forcing = np.random.default_rng(seed=seed).normal(0, df, nt)
+
+    # Time Loop
+    for it in np.arange(1, nt):
+        fi = random_forcing[it]
+        SAT[it] = fi
+        time[it] = time[it - 1] + dt
+        SST[it] = (
+            SST[it - 1] + (-l0 * SST[it - 1]) * dt + (SAT[it - 1]) * dW
+        )
+    timep = time / 365.25  # (yr) TIME for plot
+
+    ds = xr.Dataset(
+    coords=dict(
+        time=(["time"], time),
+        time_years=(["time"], timep),
+        ocean_restoring_timescale= (["ocean_restoring_timescale"], [tau0]),
+        stochastic_forcing_intensity= (["stochastic_forcing_intensity"], [df]),
+        ),
+        data_vars=dict(
+            random_forcing=(["time"], random_forcing),
+            surface_air_temperature=(["time", "ocean_restoring_timescale", "stochastic_forcing_intensity"], SAT[:, np.newaxis, np.newaxis]),
+            sponge_sea_surface_temperature=(["time", "ocean_restoring_timescale", "stochastic_forcing_intensity"], SST[:, np.newaxis, np.newaxis]),
+        ),
+        attrs=dict(
+            coder="Florian Sévellec <florian.sevellec@univ-brest.fr>",
+        ),
+    )
+
+    if save_path is not None:
+        ds.to_netcdf(save_path, mode="w")
+    else:
+        return ds
+
+
+def oscillator_ocean(nt=1000,
+    dt=365.25,
+    df=1.15e-1,
+    per0=10 * 365.25,
+    tau0=24 * 365.25,
+
+    save_path=None,
+    seed=331381460666):
+
+    dW = np.sqrt(dt)  # (sqrt (days)) Stochastic time step
+
+    # Precomputation
+    l0 = 2 / tau0  # (days-1) inverse restoring timescale
+    o0 = 2 * 3.14 / per0  # (days-1) inverse oscillation timescale
+
+    # Initialization
+    SAT = np.zeros(nt)
+    SST = np.zeros(nt)
+    DOT = np.zeros(nt)
+    time = np.zeros(nt)
+
+    random_forcing = np.random.default_rng(seed=seed).normal(0, df, nt)
+
+    # Time Loop
+    for it in np.arange(1, nt):
+        SAT[it] = random_forcing[it]
+        time[it] = time[it - 1] + dt
+        SST[it] = (
+            SST[it - 1]
+            + (-l0 * SST[it - 1] - o0 * DOT[it - 1]) * dt
+            + (SAT[it - 1]) * dW
+        )
+        DOT[it] = DOT[it - 1] + (o0 * SST[it - 1]) * dt
+    timep = time / 365.25  # (yr) TIME for plot
+
+    ds = xr.Dataset(
+    coords=dict(
+        time=(["time"], time),
+        time_years=(["time"], timep),
+        ocean_restoring_timescale= (["ocean_restoring_timescale"], [tau0]),
+        ocean_oscillation_timescale= (["ocean_oscillation_timescale"], [per0]),
+        stochastic_forcing_intensity= (["stochastic_forcing_intensity"], [df]),
+
+        ),
+        data_vars=dict(
+            random_forcing=(["time"], random_forcing),
+            surface_air_temperature=(["time", "ocean_restoring_timescale", "ocean_oscillation_timescale", "stochastic_forcing_intensity"], SAT[:, np.newaxis, np.newaxis, np.newaxis]),
+            oscillator_sea_surface_temperature=(["time", "ocean_restoring_timescale", "ocean_oscillation_timescale", "stochastic_forcing_intensity"], SST[:, np.newaxis, np.newaxis, np.newaxis]),
+            oscillator_deep_ocean_temperature=(["time", "ocean_restoring_timescale", "ocean_oscillation_timescale", "stochastic_forcing_intensity"], DOT[:, np.newaxis, np.newaxis, np.newaxis]),
+        ),
+        attrs=dict(
+            coder="Florian Sévellec <florian.sevellec@univ-brest.fr>",
+        ),
+    )
+
+    if save_path is not None:
+        ds.to_netcdf(save_path, mode="w")
+    else:
+        return ds
 
 
 def integrate_idealized_ocean(
@@ -46,140 +157,24 @@ def integrate_idealized_ocean(
     save_path=None,
     seed=331381460666,
 ):
-    # Note: the seed was produced with
-    # >>> np.random.default_rng(seed=9384657836).integers(0, 1e12, 1)[0]
-    # 331381460666
-
-    # Numerical parameter
-    nt = time_steps  # number of timestep
-    dt = dt  # 365.25 # (days) time step
-    dW = np.sqrt(dt)  # (sqrt (days)) Stochastic time step
-
-    # Physical parameters
-    tau0 = ocean_restoring_timescale  # (days) ocean restoring timescale
-    per0 = ocean_oscillation_timescale  # (days) ocean oscillation timescale
-    df = stochastic_forcing_intensity  # (K days-1/2) stochastic forcing intensity
-
-    # Precomputation
-    l0 = 2 / tau0  # (days-1) inverse restoring timescale
-    o0 = 2 * 3.14 / per0  # (days-1) inverse oscillation timescale
-
-    # Initialization
-    SAT = np.zeros(nt)
-    SST_spg = np.zeros(nt)
-    SST_osc = np.zeros(nt)
-    DOT_osc = np.zeros(nt)
-    time = np.zeros(nt)
-
-    normal = np.random.default_rng(seed=seed).normal(0, df, nt)
-
-    # Time Loop
-    for it in np.arange(1, nt):
-        fi = normal[it]
-        SAT[it] = fi
-        time[it] = time[it - 1] + dt
-        SST_spg[it] = (
-            SST_spg[it - 1] + (-l0 * SST_spg[it - 1]) * dt + (SAT[it - 1]) * dW
-        )
-        SST_osc[it] = (
-            SST_osc[it - 1]
-            + (-l0 * SST_osc[it - 1] - o0 * DOT_osc[it - 1]) * dt
-            + (SAT[it - 1]) * dW
-        )
-        DOT_osc[it] = DOT_osc[it - 1] + (o0 * SST_osc[it - 1]) * dt
-
-    timep = time / 365.25  # (yr) TIME for plot
-
-    ds = integration_to_netcdf(
-        time=time,
-        timep=timep,
-        SAT=SAT,
-        SST_spg=SST_spg,
-        SST_osc=SST_osc,
-        DOT_osc=DOT_osc,
-        tau0=tau0,
-        per0=per0,
-        df=df,
-    )
+    spunge = spunge_ocean(nt=time_steps,
+                          dt=dt,
+                          df=stochastic_forcing_intensity,
+                          tau0=ocean_restoring_timescale,
+                          seed=seed,
+                          save_path=None
+                          )
+    oscillator = oscillator_ocean(nt=time_steps,
+                          dt=dt,
+                          df=stochastic_forcing_intensity,
+                          tau0=ocean_restoring_timescale,
+                          per0=ocean_oscillation_timescale,
+                          seed=seed,
+                          save_path=None
+                          )
+    ds = xr.merge([spunge, oscillator])
 
     if save_path is not None:
         ds.to_netcdf(save_path, mode="w")
     else:
         return ds
-
-
-# create a xarray to store the data as netcdf file
-def integration_to_netcdf(time, timep, SAT, SST_spg, SST_osc, DOT_osc, tau0, per0, df):
-    models = ["sponge", "oscillator"]
-    desciption = "Data created by a idealized ocean model.\n"
-    desciption += "It includes two model runs."
-    desciption += "surface_air_temperature is used as forcing for both models."
-    desciption += "Models:"
-    desciption += "- sponge: Sponge Ocean without interior oscillation."
-    desciption += "- oscillator: Oscillting Ocean of two layer with interior oscillation between surface and deep ocean."
-
-    ds = xr.Dataset(
-        coords=dict(
-            time=(["time"], time),
-            time_years=(["time"], timep),
-        ),
-        data_vars=dict(
-            surface_air_temperature=(["time"], SAT),
-            sponge_sea_surface_temperature=(["time"], SST_spg),
-            oscillator_sea_surface_temperature=(["time"], SST_osc),
-            oscillator_deep_ocean_temperature=(["time"], DOT_osc),
-        ),
-        attrs=dict(
-            coder="Florian Sévellec <florian.sevellec@univ-brest.fr>",
-            description=desciption,
-            ocean_restoring_timescale=f"{tau0} in days",
-            ocean_oscillation_timescale=f"{per0} in days",
-            stochastic_forcing_intensity=rf"{df} in (K days^(-1/2))",
-        ),
-    )
-    return ds
-
-
-def plot_idealized_results(timep, SAT, SST_spg, SST_osc, DOT_osc):
-    fig1, (ax1, ax2) = plt.subplots(nrows=2)
-    ax1.set_ylabel("SAT (K days-1/2)")
-    ax1.set_xlabel("TIME (years)")
-    ax1.set_title("SPUNGE OCEAN")
-    ax1.plot(timep[0:nt], SAT[0:nt], c="blue")
-    ax1.set_xlim(min(timep), max(timep))
-    varlim1 = np.max(abs(SAT))
-    ax1.set_ylim(-varlim1, varlim1)
-    ax1.grid()
-    ax2.set_ylabel("SST(K)")
-    ax2.set_xlabel("TIME (years)")
-    ax2.plot(timep[0:nt], SST_spg[0:nt], c="red")
-    ax2.set_xlim(min(timep), max(timep))
-    varlim2 = np.max(abs(SST_spg))
-    ax2.set_ylim(-varlim2, varlim2)
-    ax2.grid()
-
-    fig2, (ax1, ax2, ax3) = plt.subplots(nrows=3)
-    ax1.set_ylabel("SAT (K days-1/2)")
-    ax1.set_xlabel("TIME (years)")
-    ax1.set_title("OSCILLATORY OCEAN")
-    ax1.plot(timep[0:nt], SAT[0:nt], c="blue")
-    ax1.set_xlim(min(timep), max(timep))
-    varlim1 = np.max(abs(SAT))
-    ax1.set_ylim(-varlim1, varlim1)
-    ax1.grid()
-    ax2.set_ylabel("SST(K)")
-    ax2.set_xlabel("TIME (years)")
-    ax2.plot(timep[0:nt], SST_osc[0:nt], c="red")
-    ax2.set_xlim(min(timep), max(timep))
-    varlim2 = np.max(abs(SST_osc))
-    ax2.set_ylim(-varlim2, varlim2)
-    ax2.grid()
-    ax3.set_ylabel("DOT(K)")
-    ax3.set_xlabel("TIME (years)")
-    ax3.plot(timep[0:nt], DOT_osc[0:nt], c="red")
-    ax3.set_xlim(min(timep), max(timep))
-    varlim3 = np.max(abs(DOT_osc))
-    ax3.set_ylim(-varlim3, varlim3)
-    ax3.grid()
-
-    plt.show()
