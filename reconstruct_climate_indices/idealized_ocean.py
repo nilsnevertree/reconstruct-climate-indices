@@ -27,8 +27,6 @@
 # CODE
 # ----
 # Import libray
-import math
-import random
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -138,48 +136,3 @@ def integration_to_netcdf(time, timep, SAT, SST_spg, SST_osc, DOT_osc, tau0, per
         ),
     )
     return ds
-
-
-def plot_idealized_results(timep, SAT, SST_spg, SST_osc, DOT_osc):
-    fig1, (ax1, ax2) = plt.subplots(nrows=2)
-    ax1.set_ylabel("SAT (K days-1/2)")
-    ax1.set_xlabel("TIME (years)")
-    ax1.set_title("SPUNGE OCEAN")
-    ax1.plot(timep[0:nt], SAT[0:nt], c="blue")
-    ax1.set_xlim(min(timep), max(timep))
-    varlim1 = np.max(abs(SAT))
-    ax1.set_ylim(-varlim1, varlim1)
-    ax1.grid()
-    ax2.set_ylabel("SST(K)")
-    ax2.set_xlabel("TIME (years)")
-    ax2.plot(timep[0:nt], SST_spg[0:nt], c="red")
-    ax2.set_xlim(min(timep), max(timep))
-    varlim2 = np.max(abs(SST_spg))
-    ax2.set_ylim(-varlim2, varlim2)
-    ax2.grid()
-
-    fig2, (ax1, ax2, ax3) = plt.subplots(nrows=3)
-    ax1.set_ylabel("SAT (K days-1/2)")
-    ax1.set_xlabel("TIME (years)")
-    ax1.set_title("OSCILLATORY OCEAN")
-    ax1.plot(timep[0:nt], SAT[0:nt], c="blue")
-    ax1.set_xlim(min(timep), max(timep))
-    varlim1 = np.max(abs(SAT))
-    ax1.set_ylim(-varlim1, varlim1)
-    ax1.grid()
-    ax2.set_ylabel("SST(K)")
-    ax2.set_xlabel("TIME (years)")
-    ax2.plot(timep[0:nt], SST_osc[0:nt], c="red")
-    ax2.set_xlim(min(timep), max(timep))
-    varlim2 = np.max(abs(SST_osc))
-    ax2.set_ylim(-varlim2, varlim2)
-    ax2.grid()
-    ax3.set_ylabel("DOT(K)")
-    ax3.set_xlabel("TIME (years)")
-    ax3.plot(timep[0:nt], DOT_osc[0:nt], c="red")
-    ax3.set_xlim(min(timep), max(timep))
-    varlim3 = np.max(abs(DOT_osc))
-    ax3.set_ylim(-varlim3, varlim3)
-    ax3.grid()
-
-    plt.show()
