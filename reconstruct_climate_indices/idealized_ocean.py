@@ -37,11 +37,19 @@ import xarray as xr
 from matplotlib import pyplot as plt
 
 
-def idealized_ocean(time_steps = 1000, 
-                    dt = 365.25,
-                    ocean_restoring_timescale = 10 * 365.25,
-                    ocean_oscillation_timescale = 24 * 365.25,
-                    save_path = None):
+def integrate_idealized_ocean(
+    time_steps=1000,
+    dt=365.25,
+    stochastic_forcing_intensity=1.15e-1,
+    ocean_restoring_timescale=10 * 365.25,
+    ocean_oscillation_timescale=24 * 365.25,
+    save_path=None,
+    seed=331381460666,
+):
+    # Note: the seed was produced with
+    # >>> np.random.default_rng(seed=9384657836).integers(0, 1e12, 1)[0]
+    # 331381460666
+
     # Numerical parameter
     nt = time_steps  # number of timestep
     dt = dt  # 365.25 # (days) time step
@@ -50,7 +58,7 @@ def idealized_ocean(time_steps = 1000,
     # Physical parameters
     tau0 = ocean_restoring_timescale  # (days) ocean restoring timescale
     per0 = ocean_oscillation_timescale  # (days) ocean oscillation timescale
-    df = 1.15e-1  # (K days-1/2) stochastic forcing intensity
+    df = stochastic_forcing_intensity  # (K days-1/2) stochastic forcing intensity
 
     # Precomputation
     l0 = 2 / tau0  # (days-1) inverse restoring timescale
@@ -63,12 +71,16 @@ def idealized_ocean(time_steps = 1000,
     DOT_osc = np.zeros(nt)
     time = np.zeros(nt)
 
+    normal = np.random.default_rng(seed=seed).normal(0, df, nt)
+
     # Time Loop
     for it in np.arange(1, nt):
-        fi = random.normalvariate(0, df)
+        fi = normal[it]
         SAT[it] = fi
         time[it] = time[it - 1] + dt
-        SST_spg[it] = SST_spg[it - 1] + (-l0 * SST_spg[it - 1]) * dt + (SAT[it - 1]) * dW
+        SST_spg[it] = (
+            SST_spg[it - 1] + (-l0 * SST_spg[it - 1]) * dt + (SAT[it - 1]) * dW
+        )
         SST_osc[it] = (
             SST_osc[it - 1]
             + (-l0 * SST_osc[it - 1] - o0 * DOT_osc[it - 1]) * dt
@@ -79,25 +91,25 @@ def idealized_ocean(time_steps = 1000,
     timep = time / 365.25  # (yr) TIME for plot
 
     ds = integration_to_netcdf(
-            time = time, 
-            SAT = SAT, 
-            SST_spg = SST_spg, 
-            SST_osc = SST_osc, 
-            DOT_osc = DOT_osc, 
-            tau0 = tau0, 
-            per0 = per0, 
-            df = df,
-            )
-    
-    if save_path is not False or save_path is not None:
+        time=time,
+        timep=timep,
+        SAT=SAT,
+        SST_spg=SST_spg,
+        SST_osc=SST_osc,
+        DOT_osc=DOT_osc,
+        tau0=tau0,
+        per0=per0,
+        df=df,
+    )
+
+    if save_path is not None:
         ds.to_netcdf(save_path, mode="w")
     else:
         return ds
 
 
 # create a xarray to store the data as netcdf file
-def integration_to_netcdf(time, SAT, SST_spg, SST_osc, DOT_osc, tau0, per0, df) :
-
+def integration_to_netcdf(time, timep, SAT, SST_spg, SST_osc, DOT_osc, tau0, per0, df):
     models = ["sponge", "oscillator"]
     desciption = "Data created by a idealized ocean model.\n"
     desciption += "It includes two model runs."
@@ -109,15 +121,10 @@ def integration_to_netcdf(time, SAT, SST_spg, SST_osc, DOT_osc, tau0, per0, df) 
     ds = xr.Dataset(
         coords=dict(
             time=(["time"], time),
-            model=(["model"], models),
             time_years=(["time"], timep),
         ),
         data_vars=dict(
             surface_air_temperature=(["time"], SAT),
-            sea_surface_temperature=(
-                ["time", "model"],
-                np.array([SST_spg, SST_osc]).swapaxes(0, 1),
-            ),
             sponge_sea_surface_temperature=(["time"], SST_spg),
             oscillator_sea_surface_temperature=(["time"], SST_osc),
             oscillator_deep_ocean_temperature=(["time"], DOT_osc),
@@ -132,7 +139,8 @@ def integration_to_netcdf(time, SAT, SST_spg, SST_osc, DOT_osc, tau0, per0, df) 
     )
     return ds
 
-def plot_idealized_results(timep, SAT, SST_spg, SST_osc, DOT_osc) :
+
+def plot_idealized_results(timep, SAT, SST_spg, SST_osc, DOT_osc):
     fig1, (ax1, ax2) = plt.subplots(nrows=2)
     ax1.set_ylabel("SAT (K days-1/2)")
     ax1.set_xlabel("TIME (years)")
