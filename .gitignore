@@ -94,3 +94,6 @@ temporary/*
 
 # Figures in results folder
 results/*
+
+# For MlFLow need to exclude the tracking folder
+mlruns/*
