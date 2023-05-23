@@ -38,7 +38,13 @@ import xarray as xr
 
 
 def spunge_ocean(
-    nt=1000, dt=365.25, df=1.15e-1, tau0=10 * 365.25, save_path=None, seed=331381460666
+    nt=1000,
+    dt=365.25,
+    df=1.15e-1,
+    tau0=10 * 365.25,
+    save_path=None,
+    return_settings=False,
+    seed=331381460666,
 ):
     dW = np.sqrt(dt)  # (sqrt (days)) Stochastic time step
 
@@ -85,6 +91,17 @@ def spunge_ocean(
 
     if save_path is not None:
         ds.to_netcdf(save_path, mode="w")
+    elif return_settings is not False:
+        # create settings dict to store all information
+        settings = dict(
+            nt=nt,
+            dt=dt,
+            df=df,
+            tau0=tau0,
+            seed=seed,
+        )
+        return ds, settings
+
     else:
         return ds
 
@@ -96,6 +113,7 @@ def oscillatory_ocean(
     per0=24 * 365.25,
     tau0=10 * 365.25,
     save_path=None,
+    return_settings=False,
     seed=331381460666,
 ):
     dW = np.sqrt(dt)  # (sqrt (days)) Stochastic time step
@@ -169,6 +187,18 @@ def oscillatory_ocean(
 
     if save_path is not None:
         ds.to_netcdf(save_path, mode="w")
+    elif return_settings is not False:
+        # create settings dict to store all information
+        settings = dict(
+            nt=nt,
+            dt=dt,
+            df=df,
+            per0=per0,
+            tau0=tau0,
+            seed=seed,
+        )
+        return ds, settings
+
     else:
         return ds
 
@@ -182,6 +212,7 @@ def AMO_oscillatory_ocean(
     dEAP=0.1,  # (K days-1/2) stochastic amplitude of EAP
     cNAOvsEAP=0,  # (K^2 days) Covariance of NAO and EAP
     save_path=None,
+    return_settings=False,
     seed=331381460666,
 ):
     dW = np.sqrt(dt)  # (sqrt (days)) Stochastic time step
@@ -257,6 +288,19 @@ def AMO_oscillatory_ocean(
 
     if save_path is not None:
         ds.to_netcdf(save_path, mode="w")
+    elif return_settings is not False:
+        # create settings dict to store all information
+        settings = dict(
+            nt=nt,
+            dt=dt,
+            per0=per0,
+            tau0=tau0,
+            dNAO=dNAO,  # (K days-1/2) stochastic amplitude of NAO
+            dEAP=dEAP,  # (K days-1/2) stochastic amplitude of EAP
+            cNAOvsEAP=cNAOvsEAP,
+            seed=seed,
+        )
+        return ds, settings
     else:
         return ds
 
@@ -305,6 +349,7 @@ def integrate_all(
     dEAP=0.1,  # (K days-1/2) stochastic amplitude of EAP
     cNAOvsEAP=0,  # (K^2 days) Covariance of NAO and EAP
     save_path=None,
+    return_settings=False,
     seed=331381460666,
 ):
     spunge = spunge_ocean(
@@ -339,8 +384,19 @@ def integrate_all(
 
     if save_path is not None:
         ds.to_netcdf(save_path, mode="w")
+    elif return_settings is not False:
+        # create settings dict to store all information
+        settings = dict(
+            nt=time_steps,
+            dt=dt,
+            df=stochastic_forcing_intensity,
+            tau0=ocean_restoring_timescale,
+            dNAO=dNAO,  # (K days-1/2) stochastic amplitude of NAO
+            dEAP=dEAP,  # (K days-1/2) stochastic amplitude of EAP
+            cNAOvsEAP=cNAOvsEAP,
+            seed=seed,
+        )
+        return ds, settings
+
     else:
         return ds
-
-
-# %%
