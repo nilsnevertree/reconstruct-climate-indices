@@ -13,10 +13,10 @@ from mlflow import (
 )
 
 
-def track_model(_func, mlflow_args={}, func_args={}, func_kwargs={}):
+def track_model(_func, mlflow_args={}, func_args={}, func_kwargs={}, subdata_path = "idealized_ocean"):
     REPO_PATH = Path(__file__).parent.parent.resolve()
     print(REPO_PATH)
-    DATA_PATH = REPO_PATH / "data" / "idealized_ocean"
+    DATA_PATH = REPO_PATH / "data"
     set_tracking_uri(REPO_PATH / "mlruns")
     with start_run(**mlflow_args) as run:
         run_id = run.info.run_id
