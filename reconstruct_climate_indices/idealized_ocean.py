@@ -265,19 +265,19 @@ def AMO_oscillatory_ocean(
         ),
         data_vars=dict(
             NAO=(
-                ["time", "dEAP", "dEAP", "cNAOvsEAP"],
+                ["time", "dEAP", "dNAO", "cNAOvsEAP"],
                 NAO[:, np.newaxis, np.newaxis, np.newaxis],
             ),
             EAP=(
-                ["time", "dEAP", "dEAP", "cNAOvsEAP"],
+                ["time", "dEAP", "dNAO", "cNAOvsEAP"],
                 EAP[:, np.newaxis, np.newaxis, np.newaxis],
             ),
             ZOT=(
-                ["time", "dEAP", "dEAP", "cNAOvsEAP"],
+                ["time", "dEAP", "dNAO", "cNAOvsEAP"],
                 ZOT[:, np.newaxis, np.newaxis, np.newaxis],
             ),
             AMO=(
-                ["time", "dEAP", "dEAP", "cNAOvsEAP"],
+                ["time", "dEAP", "dNAO", "cNAOvsEAP"],
                 AMO[:, np.newaxis, np.newaxis, np.newaxis],
             ),
         ),
