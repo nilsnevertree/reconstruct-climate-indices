@@ -64,18 +64,19 @@ repos:
   - repo: https://github.com/psf/black
     rev: 23.3.0
     hooks:
+      - id: black
       - id: black-jupyter
         language_version: python3
 
-    # Enforce that notebooks outputs are cleared
-  - repo: https://github.com/kynan/nbstripout
-    rev: 0.6.1
-    hooks:
-    -   id: nbstripout
-        args:
-          [
-            --max-size=1k
-          ]
+  #   # Enforce that notebooks outputs are cleared
+  # - repo: https://github.com/kynan/nbstripout
+  #   rev: 0.6.1
+  #   hooks:
+  #   -   id: nbstripout
+  #       args:
+  #         [
+  #           --max-size=1k
+  #         ]
 
   # Check on large files as last hook
   - repo: https://github.com/pre-commit/pre-commit-hooks

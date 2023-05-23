@@ -76,7 +76,8 @@ target/
 .ipynb_checkpoints/
 
 # exclude data from source control by default
-/data/
+data/*
+!data/*.py
 
 # Mac OS-specific storage files
 .DS_Store
@@ -93,3 +94,6 @@ temporary/*
 
 # Figures in results folder
 results/*
+
+# For MlFLow need to exclude the tracking folder
+mlruns/*
