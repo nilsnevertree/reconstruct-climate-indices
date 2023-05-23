@@ -264,21 +264,21 @@ def AMO_oscillatory_ocean(
             cNAOvsEAP=(["cNAOvsEAP"], [cNAOvsEAP]),
         ),
         data_vars=dict(
-            NAO=(
+            AMO=(
                 ["time", "dEAP", "dNAO", "cNAOvsEAP"],
-                NAO[:, np.newaxis, np.newaxis, np.newaxis],
+                AMO[:, np.newaxis, np.newaxis, np.newaxis],
             ),
             EAP=(
                 ["time", "dEAP", "dNAO", "cNAOvsEAP"],
                 EAP[:, np.newaxis, np.newaxis, np.newaxis],
             ),
+            NAO=(
+                ["time", "dEAP", "dNAO", "cNAOvsEAP"],
+                NAO[:, np.newaxis, np.newaxis, np.newaxis],
+            ),
             ZOT=(
                 ["time", "dEAP", "dNAO", "cNAOvsEAP"],
                 ZOT[:, np.newaxis, np.newaxis, np.newaxis],
-            ),
-            AMO=(
-                ["time", "dEAP", "dNAO", "cNAOvsEAP"],
-                AMO[:, np.newaxis, np.newaxis, np.newaxis],
             ),
         ),
         attrs=dict(

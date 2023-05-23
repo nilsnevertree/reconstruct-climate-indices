@@ -16,14 +16,14 @@ from mlflow import (
 
 
 def track_model(
-    _func, mlflow_args={}, func_args={}, func_kwargs={}, subdata_path="idealized_ocean"
+    func, mlflow_args={}, func_args={}, func_kwargs={}, subdata_path="idealized_ocean"
 ):
     REPO_PATH = Path(__file__).parent.parent.resolve()
     set_tracking_uri(REPO_PATH / "mlruns")
     with start_run(**mlflow_args) as run:
         # log function name
         run_id = run.info.run_id
-        log_param("FunctionName", _func.__name__)
+        log_param("FunctionName", func.__name__)
 
         DATA_PATH = REPO_PATH / "data" / subdata_path / f"{run_id}"
         # log filepath and store file
@@ -35,7 +35,7 @@ def track_model(
             os.makedirs(DATA_PATH)
 
         # perform model run as save file
-        ds, setting = _func(*func_args, **func_kwargs)
+        ds, setting = func(*func_args, **func_kwargs)
         log_params(setting)
         ds.to_netcdf(FILE_PATH)
 
