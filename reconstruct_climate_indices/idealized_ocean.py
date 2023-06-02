@@ -1,4 +1,3 @@
-# %%
 # idealized.ipynb
 # DESCRIPTION
 # -----------
@@ -29,43 +28,91 @@
 # ----
 # Import libray
 
+import os
+
+from typing import Dict, Tuple, TypeVar, Union
+from warnings import warn
+
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 
 
-# %%
+# typing objects
+PathLike = TypeVar("PathLike", str, os.PathLike, None)
+ModelOutput = TypeVar("ModelOutput", xr.Dataset, Tuple[xr.Dataset, Dict])
+
+# Functions
+
+
+def __timesteps_as_int__(timesteps):
+    # make sure the timesteps are of int type:
+    if not isinstance(timesteps, int):
+        timesteps = int(timesteps)
+        warn(
+            f"The given timesteps were not in int format.\nThey were modified and are now: timesteps = {timesteps}"
+        )
+    return timesteps
 
 
 def spunge_ocean(
-    nt=1000,
-    dt=365.25,
-    df=1.15e-1,
-    tau0=10 * 365.25,
-    save_path=None,
-    return_settings=False,
-    seed=331381460666,
-):
-    dW = np.sqrt(dt)  # (sqrt (days)) Stochastic time step
+    nt: Union[int, float] = 1000,
+    dt: float = 365.25,
+    df: float = 1.15e-1,
+    tau0: float = 10 * 365.25,
+    save_path: PathLike = None,
+    return_settings: bool = False,
+    seed: int = 331381460666,
+) -> ModelOutput:
+    """
+    Simulates the temperature evolution of the ocean surface using a stochastic
+    model with a restoring timescale.
+
+    Parameters:
+        nt (int): Number of time steps (default: 1000).
+        dt (float): Time step size in days (default: 365.25).
+        df (float): Intensity of stochastic forcing (default: 1.15e-1).
+        tau0 (float): Restoring timescale in days (default: 10 * 365.25).
+        save_path (str): Path to save the resulting data as a NetCDF file (default: None).
+        return_settings (bool): If True, returns the simulation settings along with the data (default: False).
+        seed (int): Seed for the random number generator (default: 331381460666).
+
+    Returns:
+        xr.Dataset: Dataset containing simulated data variables.
+    """
+
+    # Verify that timesteps are of int type:
+    nt = __timesteps_as_int__(nt)
+
+    # Stochastic time step
+    dW = np.sqrt(dt)
 
     # Precomputation
-    l0 = 2 / tau0  # (days-1) inverse restoring timescale
+    l0 = 2 / tau0  # Inverse restoring timescale
+    o0 = 2 * np.pi / per0  # Inverse oscillation timescale
 
-    # Initialization
-    SAT = np.zeros(nt)
-    SST = np.zeros(nt)
-    time = np.zeros(nt)
+    # Generate random forcing
+    random_forcing = np.random.default_rng(seed=seed).normal(0, df, nt)
 
+    # Time array
+    time = np.arange(nt) * dt
+
+    # Time Loop
+    SAT = random_forcing.copy()
+    SST = np.zeros_like(SAT)
+
+    # Generate random forcing
     random_forcing = np.random.default_rng(seed=seed).normal(0, df, nt)
 
     # Time Loop
-    for it in np.arange(1, nt):
-        fi = random_forcing[it]
-        SAT[it] = fi
+    for it in range(1, nt):
         time[it] = time[it - 1] + dt
         SST[it] = SST[it - 1] + (-l0 * SST[it - 1]) * dt + (SAT[it - 1]) * dW
-    timep = time / 365.25  # (yr) TIME for plot
 
+    # Time for plot (in years)
+    timep = time / 365.25
+
+    # Create the dataset
     ds = xr.Dataset(
         coords=dict(
             time=(["time"], time),
@@ -89,10 +136,12 @@ def spunge_ocean(
         ),
     )
 
+    # Save the dataset if save_path is provided
     if save_path is not None:
         ds.to_netcdf(save_path, mode="w")
+
+    # Return dataset and settings if return_settings is True
     elif return_settings is not False:
-        # create settings dict to store all information
         settings = dict(
             nt=nt,
             dt=dt,
@@ -102,46 +151,80 @@ def spunge_ocean(
         )
         return ds, settings
 
+    # Return the dataset
     else:
         return ds
 
 
 def oscillatory_ocean(
-    nt=1000,
-    dt=365.25,
-    df=1.15e-1,
-    per0=24 * 365.25,
-    tau0=10 * 365.25,
-    save_path=None,
-    return_settings=False,
-    seed=331381460666,
-):
-    dW = np.sqrt(dt)  # (sqrt (days)) Stochastic time step
+    nt: Union[int, float] = 1000,
+    dt: float = 365.25,
+    df: float = 1.15e-1,
+    per0: float = 24 * 365.25,
+    tau0: float = 10 * 365.25,
+    save_path: PathLike = None,
+    return_settings: bool = False,
+    seed: int = 331381460666,
+) -> ModelOutput:
+    """
+    Simulates the temperature evolution of the ocean surface and deep ocean
+    using a stochastic model with restoring and oscillation timescales.
+
+    Parameters
+    ----------
+    nt : int
+        Number of time steps (default: 1000).
+    dt : float
+        Time step size in days (default: 365.25).
+    df : float
+        Intensity of stochastic forcing (default: 1.15e-1).
+    per0 : float
+        Period of oscillation in days (default: 24 * 365.25).
+    tau0 : float
+        Restoring timescale in days (default: 10 * 365.25).
+    save_path : str
+        Path to save the resulting data as a NetCDF file (default: None).
+    return_settings : bool
+        If True, returns the simulation settings along with the data (default: False).
+    seed : int
+        Seed for the random number generator (default: 331381460666).
+
+    Returns
+    -------
+    xr.Dataset
+        Dataset containing simulated data variables.
+    """
+
+    # Verify that timesteps are of int type:
+    nt = __timesteps_as_int__(nt)
+
+    # Stochastic time step
+    dW = np.sqrt(dt)
 
     # Precomputation
-    l0 = 2 / tau0  # (days-1) inverse restoring timescale
-    o0 = 2 * 3.14 / per0  # (days-1) inverse oscillation timescale
+    l0 = 2 / tau0  # Inverse restoring timescale
+    o0 = 2 * np.pi / per0  # Inverse oscillation timescale
 
-    # Initialization
-    SAT = np.zeros(nt)
-    SST = np.zeros(nt)
-    DOT = np.zeros(nt)
-    time = np.zeros(nt)
-
+    # Generate random forcing
     random_forcing = np.random.default_rng(seed=seed).normal(0, df, nt)
 
-    # Time Loop
-    for it in np.arange(1, nt):
-        SAT[it] = random_forcing[it]
-        time[it] = time[it - 1] + dt
-        SST[it] = (
-            SST[it - 1]
-            + (-l0 * SST[it - 1] - o0 * DOT[it - 1]) * dt
-            + (SAT[it - 1]) * dW
-        )
-        DOT[it] = DOT[it - 1] + (o0 * SST[it - 1]) * dt
-    timep = time / 365.25  # (yr) TIME for plot
+    # Time array
+    time = np.arange(nt) * dt
 
+    # Time Loop
+    SAT = random_forcing.copy()
+    SST = np.zeros_like(SAT)
+    DOT = np.zeros_like(SAT)
+    for it in range(1, nt):
+        SST[it] = (
+            SST[it - 1] + (-l0 * SST[it - 1] - o0 * DOT[it - 1]) * dt + SAT[it - 1] * dW
+        )
+        DOT[it] = DOT[it - 1] + o0 * SST[it - 1] * dt
+
+    # Time for plot (in years)
+    timep = time / 365.25
+
+    # Create the dataset
     ds = xr.Dataset(
         coords=dict(
             time=(["time"], time),
@@ -198,105 +281,143 @@ def oscillatory_ocean(
             seed=seed,
         )
         return ds, settings
-
     else:
         return ds
 
 
 def AMO_oscillatory_ocean(
-    nt=1000,
-    dt=365.25,
-    per0=24 * 365.25,
-    tau0=10 * 365.25,
-    dNAO=0.1,  # (K days-1/2) stochastic amplitude of NAO
-    dEAP=0.1,  # (K days-1/2) stochastic amplitude of EAP
-    cNAOvsEAP=0,  # (K^2 days) Covariance of NAO and EAP
-    save_path=None,
-    return_settings=False,
-    seed=331381460666,
-):
-    dW = np.sqrt(dt)  # (sqrt (days)) Stochastic time step
+    nt: Union[int, float] = 1000,
+    dt: float = 365.25,
+    per0: float = 24 * 365.25,
+    tau0: float = 10 * 365.25,
+    dNAO: float = 0.1,  # (K days-1/2) stochastic amplitude of NAO
+    dEAP: float = 0.1,  # (K days-1/2) stochastic amplitude of EAP
+    cNAOvsEAP: float = 0,  # (K^2 days) Covariance of NAO and EAP
+    save_path: PathLike = None,
+    return_settings: bool = False,
+    seed: int = 331381460666,
+) -> ModelOutput:
+    """
+    Simulates the temperature evolution of the Atlantic Multidecadal
+    Oscillation (AMO) and related atmospheric variables using a stochastic
+    model with restoring and oscillation timescales.
+
+    The AMO is a natural climate variability pattern characterized by long-lived fluctuations in the sea surface temperature of the North Atlantic Ocean. It plays a significant role in modulating regional and global climate conditions, including precipitation patterns, hurricane activity, and marine ecosystems.
+
+    This function implements a stochastic model that captures the essential dynamics of the AMO. The model simulates the interactions between the AMO and two atmospheric variables, the North Atlantic Oscillation (NAO) and the East Atlantic Pattern (EAP), which influence the ocean temperature through stochastic atmospheric forcing.
+
+    Parameters
+    ----------
+    nt : int
+        Number of time steps (default: 1000).
+    dt : float
+        Time step size in days (default: 365.25).
+    per0 : float
+        Period of oscillation in days (default: 24 * 365.25).
+    tau0 : float
+        Restoring timescale in days (default: 10 * 365.25).
+    dNAO : float
+        Stochastic amplitude of NAO (default: 0.1).
+    dEAP : float
+        Stochastic amplitude of EAP (default: 0.1).
+    cNAOvsEAP : float
+        Covariance of NAO and EAP (default: 0).
+    save_path : str
+        Path to save the resulting data as a NetCDF file (default: None).
+    return_settings : bool
+        If True, returns the simulation settings along with the data (default: False).
+    seed : int
+        Seed for the random number generator (default: 331381460666).
+
+    Returns
+    -------
+    xr.Dataset
+        Dataset containing simulated data variables.
+    """
+
+    # Verify that timesteps are of int type:
+    nt = __timesteps_as_int__(nt)
+
+    # Stochastic time step
+    dW = np.sqrt(dt)
 
     # Precomputation
-    l0 = 2 / tau0  # (days-1) inverse restoring timescale
-    o0 = 2 * 3.14 / per0  # (days-1) inverse oscillation timescale
-    A = [
-        [dNAO**2, cNAOvsEAP],
-        [cNAOvsEAP, dEAP**2],
-    ]  # Covariance Matrix of ztmospheric forcing
+    l0 = 2 / tau0  # Inverse restoring timescale
+    o0 = 2 * np.pi / per0  # Inverse oscillation timescale
+    A = np.array(
+        [[dNAO**2, cNAOvsEAP], [cNAOvsEAP, dEAP**2]]
+    )  # Covariance Matrix of atmospheric forcing
     L = np.linalg.cholesky(A)  # Cholesky factorization of the Covariance Matrix
 
-    # Initialization
+    # Time array
+    time = np.arange(nt) * dt
+
+    # Initialize arrays
     NAO = np.zeros(nt)
     EAP = np.zeros(nt)
     AMO = np.zeros(nt)
     ZOT = np.zeros(nt)
-    time = np.zeros(nt)
 
+    # Random number generator
     rng = np.random.default_rng(seed=seed)
 
     # Time Loop
-    for it in np.arange(1, nt):
+    for it in range(1, nt):
         time[it] = time[it - 1] + dt
-        # AMO-type Ocean oscillation
+
+        # Generate random forcing
         ft = rng.standard_normal(2)
-        ftt = np.matmul(ft, A)
+        ftt = np.matmul(ft, L.T)
         NAO[it] = ftt[0]
         EAP[it] = ftt[1]
+
         AMO[it] = (
-            AMO[it - 1]
-            + (-l0 * AMO[it - 1] - o0 * ZOT[it - 1]) * dt
-            + (EAP[it - 1]) * dW
+            AMO[it - 1] + (-l0 * AMO[it - 1] - o0 * ZOT[it - 1]) * dt + EAP[it - 1] * dW
         )
         ZOT[it] = (
-            ZOT[it - 1]
-            + (-l0 * ZOT[it - 1] + o0 * AMO[it - 1]) * dt
-            + (NAO[it - 1]) * dW
+            ZOT[it - 1] + (-l0 * ZOT[it - 1] + o0 * AMO[it - 1]) * dt + NAO[it - 1] * dW
         )
-        timep = time / 365.25  # (yr) TIME for plot
 
+    # Convert time to years for plotting
+    timep = time / 365.25
+
+    # Create the dataset
     ds = xr.Dataset(
         coords=dict(
             time=(["time"], time),
             time_years=(["time"], timep),
-            dEAP=(["dEAP"], [dEAP]),
-            dNAO=(["dNAO"], [dNAO]),
-            cNAOvsEAP=(["cNAOvsEAP"], [cNAOvsEAP]),
         ),
         data_vars=dict(
             AMO=(
-                ["time", "dEAP", "dNAO", "cNAOvsEAP"],
-                AMO[:, np.newaxis, np.newaxis, np.newaxis],
+                ["time"],
+                AMO,
             ),
             EAP=(
-                ["time", "dEAP", "dNAO", "cNAOvsEAP"],
-                EAP[:, np.newaxis, np.newaxis, np.newaxis],
+                ["time"],
+                EAP,
             ),
             NAO=(
-                ["time", "dEAP", "dNAO", "cNAOvsEAP"],
-                NAO[:, np.newaxis, np.newaxis, np.newaxis],
+                ["time"],
+                NAO,
             ),
             ZOT=(
-                ["time", "dEAP", "dNAO", "cNAOvsEAP"],
-                ZOT[:, np.newaxis, np.newaxis, np.newaxis],
+                ["time"],
+                ZOT,
             ),
         ),
-        attrs=dict(
-            coder="Florian Sévellec <florian.sevellec@univ-brest.fr>",
-        ),
+        attrs=dict(coder="Florian Sévellec <florian.sevellec@univ-brest.fr>"),
     )
 
     if save_path is not None:
         ds.to_netcdf(save_path, mode="w")
-    elif return_settings is not False:
-        # create settings dict to store all information
+    elif return_settings:
         settings = dict(
             nt=nt,
             dt=dt,
             per0=per0,
             tau0=tau0,
-            dNAO=dNAO,  # (K days-1/2) stochastic amplitude of NAO
-            dEAP=dEAP,  # (K days-1/2) stochastic amplitude of EAP
+            dNAO=dNAO,
+            dEAP=dEAP,
             cNAOvsEAP=cNAOvsEAP,
             seed=seed,
         )
@@ -314,6 +435,9 @@ def integrate_idealized_ocean(
     save_path=None,
     seed=331381460666,
 ):
+    # Verify that timesteps are of int type:
+    time_steps = __timesteps_as_int__(time_steps)
+
     spunge = spunge_ocean(
         nt=time_steps,
         dt=dt,
@@ -352,6 +476,9 @@ def integrate_all(
     return_settings=False,
     seed=331381460666,
 ):
+    # Verify that timesteps are of int type:
+    time_steps = __timesteps_as_int__(time_steps)
+
     spunge = spunge_ocean(
         nt=time_steps,
         dt=dt,

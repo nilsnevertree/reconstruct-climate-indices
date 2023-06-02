@@ -97,3 +97,4 @@ results/*
 
 # For MlFLow need to exclude the tracking folder
 mlruns/*
+mlflow-artifacts/*
