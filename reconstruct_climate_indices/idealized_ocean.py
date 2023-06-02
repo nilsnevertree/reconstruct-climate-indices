@@ -1,4 +1,3 @@
-# %%
 # idealized.ipynb
 # DESCRIPTION
 # -----------
@@ -29,23 +28,42 @@
 # ----
 # Import libray
 
+import os
+
+from typing import Dict, Tuple, TypeVar, Union
+from warnings import warn
+
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 
 
-# %%
+# typing objects
+PathLike = TypeVar("PathLike", str, os.PathLike, None)
+ModelOutput = TypeVar("ModelOutput", xr.Dataset, Tuple[xr.Dataset, Dict])
+
+# Functions
+
+
+def __timesteps_as_int__(timesteps):
+    # make sure the timesteps are of int type:
+    if not isinstance(timesteps, int):
+        timesteps = int(timesteps)
+        warn(
+            f"The given timesteps were not in int format.\nThey were modified and are now: timesteps = {timesteps}"
+        )
+    return timesteps
 
 
 def spunge_ocean(
-    nt=1000,
-    dt=365.25,
-    df=1.15e-1,
-    tau0=10 * 365.25,
-    save_path=None,
-    return_settings=False,
-    seed=331381460666,
-):
+    nt: Union[int, float] = 1000,
+    dt: float = 365.25,
+    df: float = 1.15e-1,
+    tau0: float = 10 * 365.25,
+    save_path: PathLike = None,
+    return_settings: bool = False,
+    seed: int = 331381460666,
+) -> ModelOutput:
     """
     Simulates the temperature evolution of the ocean surface using a stochastic
     model with a restoring timescale.
@@ -62,6 +80,9 @@ def spunge_ocean(
     Returns:
         xr.Dataset: Dataset containing simulated data variables.
     """
+
+    # Verify that timesteps are of int type:
+    nt = __timesteps_as_int__(nt)
 
     # Stochastic time step
     dW = np.sqrt(dt)
@@ -136,15 +157,15 @@ def spunge_ocean(
 
 
 def oscillatory_ocean(
-    nt=1000,
-    dt=365.25,
-    df=1.15e-1,
-    per0=24 * 365.25,
-    tau0=10 * 365.25,
-    save_path=None,
-    return_settings=False,
-    seed=331381460666,
-):
+    nt: Union[int, float] = 1000,
+    dt: float = 365.25,
+    df: float = 1.15e-1,
+    per0: float = 24 * 365.25,
+    tau0: float = 10 * 365.25,
+    save_path: PathLike = None,
+    return_settings: bool = False,
+    seed: int = 331381460666,
+) -> ModelOutput:
     """
     Simulates the temperature evolution of the ocean surface and deep ocean
     using a stochastic model with restoring and oscillation timescales.
@@ -173,6 +194,9 @@ def oscillatory_ocean(
     xr.Dataset
         Dataset containing simulated data variables.
     """
+
+    # Verify that timesteps are of int type:
+    nt = __timesteps_as_int__(nt)
 
     # Stochastic time step
     dW = np.sqrt(dt)
@@ -262,17 +286,17 @@ def oscillatory_ocean(
 
 
 def AMO_oscillatory_ocean(
-    nt=1000,
-    dt=365.25,
-    per0=24 * 365.25,
-    tau0=10 * 365.25,
-    dNAO=0.1,  # (K days-1/2) stochastic amplitude of NAO
-    dEAP=0.1,  # (K days-1/2) stochastic amplitude of EAP
-    cNAOvsEAP=0,  # (K^2 days) Covariance of NAO and EAP
-    save_path=None,
-    return_settings=False,
-    seed=331381460666,
-):
+    nt: Union[int, float] = 1000,
+    dt: float = 365.25,
+    per0: float = 24 * 365.25,
+    tau0: float = 10 * 365.25,
+    dNAO: float = 0.1,  # (K days-1/2) stochastic amplitude of NAO
+    dEAP: float = 0.1,  # (K days-1/2) stochastic amplitude of EAP
+    cNAOvsEAP: float = 0,  # (K^2 days) Covariance of NAO and EAP
+    save_path: PathLike = None,
+    return_settings: bool = False,
+    seed: int = 331381460666,
+) -> ModelOutput:
     """
     Simulates the temperature evolution of the Atlantic Multidecadal
     Oscillation (AMO) and related atmospheric variables using a stochastic
@@ -310,6 +334,9 @@ def AMO_oscillatory_ocean(
     xr.Dataset
         Dataset containing simulated data variables.
     """
+
+    # Verify that timesteps are of int type:
+    nt = __timesteps_as_int__(nt)
 
     # Stochastic time step
     dW = np.sqrt(dt)
@@ -359,26 +386,23 @@ def AMO_oscillatory_ocean(
         coords=dict(
             time=(["time"], time),
             time_years=(["time"], timep),
-            dEAP=(["dEAP"], [dEAP]),
-            dNAO=(["dNAO"], [dNAO]),
-            cNAOvsEAP=(["cNAOvsEAP"], [cNAOvsEAP]),
         ),
         data_vars=dict(
             AMO=(
-                ["time", "dEAP", "dNAO", "cNAOvsEAP"],
-                AMO[:, np.newaxis, np.newaxis, np.newaxis],
+                ["time"],
+                AMO,
             ),
             EAP=(
-                ["time", "dEAP", "dNAO", "cNAOvsEAP"],
-                EAP[:, np.newaxis, np.newaxis, np.newaxis],
+                ["time"],
+                EAP,
             ),
             NAO=(
-                ["time", "dEAP", "dNAO", "cNAOvsEAP"],
-                NAO[:, np.newaxis, np.newaxis, np.newaxis],
+                ["time"],
+                NAO,
             ),
             ZOT=(
-                ["time", "dEAP", "dNAO", "cNAOvsEAP"],
-                ZOT[:, np.newaxis, np.newaxis, np.newaxis],
+                ["time"],
+                ZOT,
             ),
         ),
         attrs=dict(coder="Florian Sévellec <florian.sevellec@univ-brest.fr>"),
@@ -411,6 +435,9 @@ def integrate_idealized_ocean(
     save_path=None,
     seed=331381460666,
 ):
+    # Verify that timesteps are of int type:
+    time_steps = __timesteps_as_int__(time_steps)
+
     spunge = spunge_ocean(
         nt=time_steps,
         dt=dt,
@@ -449,6 +476,9 @@ def integrate_all(
     return_settings=False,
     seed=331381460666,
 ):
+    # Verify that timesteps are of int type:
+    time_steps = __timesteps_as_int__(time_steps)
+
     spunge = spunge_ocean(
         nt=time_steps,
         dt=dt,
