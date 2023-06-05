@@ -65,6 +65,7 @@ def product_dict(**kwargs):
 # #### Kalman Settings
 
 # %%
+processing_function = pipeline.xarray_Kalman_SEM
 # seed for the randomnumber generator
 seed = 39266
 # Varaince of the randomly initialized latent variable
@@ -103,10 +104,10 @@ rng1 = np.random.default_rng(seed=seed)
 # #### Experiment settings
 #
 # The model used is the ``AMO_oscillatory_ocean``. The parameters ``dNAO`` and ``dEAP`` will be changed.
-
+model_function = AMO_oscillatory_ocean
 # %%
 default_settings = dict(
-    nt=1000,  # timesteps
+    nt=50 * 12,  # timesteps
     dt=30,  # days
     per0=24 * 365.25,  # days
     tau0=10 * 365.25,  # days
@@ -116,8 +117,8 @@ default_settings = dict(
 )
 
 
-modified_arguments = ["per0", "tau0"]
-factors = np.array([0.5, 1, 2])
+modified_arguments = ["dNAO", "per0"]
+factors = np.array([0.1, 0.5, 1, 2, 5])
 
 # create all the experiment setups
 experiment_setups = dict()
@@ -169,6 +170,12 @@ with start_run(experiment_id=ExperimentID) as run:
     KalmanFile = SubdataPath / f"{run_id}_kalman.nc"
 
     # log all settings and file locations.
+    log_params(
+        dict(
+            ModelFunction=model_function.__name__,
+            KalmanFunction=processing_function.__name__,
+        )
+    )
     log_params(kalman_settings)
     log_params(parameter_settings)
     log_params(
@@ -205,7 +212,7 @@ with start_run(experiment_id=ExperimentID) as run:
         # update the settings with the current set from the experiment settings.
         setting.update(**sub_setting)
         # integrate the model and store the output xr.Dataset
-        data = AMO_oscillatory_ocean(**setting)
+        data = model_function(**setting)
         data = pipeline.expand_and_assign_coords(
             ds1=data, ds2=expand_ds, select_dict=sub_setting
         )
@@ -232,7 +239,7 @@ with start_run(experiment_id=ExperimentID) as run:
         variance=random_variance,
     )
     experiments_kalman = pipeline.run_function_on_multiple_subdatasets(
-        processing_function=pipeline.xarray_Kalman_SEM,
+        processing_function=processing_function,
         parent_dataset=input_kalman,
         subdataset_selections=experiment_settings,
         func_args=func_args,
