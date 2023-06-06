@@ -1,4 +1,3 @@
-# %% [markdown]
 # # Track parameter Experiments
 #
 # ### Track the experiment using ``mlflow``
@@ -26,12 +25,12 @@
 #                 └───run_id
 #                     │    run_id_input.nc
 #                     │    run_id_kalman.nc
-#                     │    run_id_kalman_settings.yml
-#                     │    run_id_parameter_settings.yml
+#                     │    run_id_kalman_setup.yml
+#                     │    run_id_parameter_setup.yml
 # Where ``run_id`` is e.g. *553cbd3bc6ce44028c8daad12647c306*
 #
 
-# %%
+
 print("Start imports.")
 import itertools
 
@@ -45,94 +44,10 @@ from kalman_reconstruction import pipeline
 from mlflow import end_run, log_artifact, log_params, set_tracking_uri, start_run
 from tqdm import tqdm
 
-from reconstruct_climate_indices.idealized_ocean import AMO_oscillatory_ocean
-
 
 print("Done!")
 
-
-# %%
-def product_dict(**kwargs):
-    keys = kwargs.keys()
-    for instance in itertools.product(*kwargs.values()):
-        yield dict(zip(keys, instance))
-
-
-# %% [markdown]
-# ## Settings
-
-# %% [markdown]
-# #### Kalman Settings
-
-# %%
-processing_function = pipeline.xarray_Kalman_SEM
-# seed for the randomnumber generator
-seed = 39266
-# Varaince of the randomly initialized latent variable
-random_variance = 1
-# itterations of the kalman SEM
-nb_iter_SEM = 30
-# observation variables
-observation_variables = ["AMO", "NAO", "EAP"]
-# state variables
-state_variables = ["AMO", "NAO", "EAP", "latent"]
-
-# create the dictonary that shall be used ot store the kalman_settings in the mlflow tracking
-kalman_settings = dict(
-    RandomNumberGeneratorSeed=seed,
-    RandomVariance=random_variance,
-    NumberKalmanIteration=nb_iter_SEM,
-    ObservartionVariables=observation_variables,
-    StateVariables=state_variables,
-)
-# positional args for the kalman_SEM algorithm
-func_args = dict()
-# key word args for the kalman_SEM algorithm
-func_kwargs = dict(
-    observation_variables=observation_variables,
-    state_variables=state_variables,
-    nb_iter_SEM=nb_iter_SEM,
-)
-
-# Random number generators used to create the latent varibale.
-rng1 = np.random.default_rng(seed=seed)
-# rng2 = np.random.default_rng(seed=seed + 1)
-# rng3 = np.random.default_rng(seed=seed + 2)
-# rng4 = np.random.default_rng(seed=seed + 3)
-
-# %% [markdown]
-# #### Experiment settings
-#
-# The model used is the ``AMO_oscillatory_ocean``. The parameters ``dNAO`` and ``dEAP`` will be changed.
-model_function = AMO_oscillatory_ocean
-# %%
-default_settings = dict(
-    nt=50 * 12,  # timesteps
-    dt=30,  # days
-    per0=24 * 365.25,  # days
-    tau0=10 * 365.25,  # days
-    dNAO=0.1,
-    dEAP=0.1,
-    cNAOvsEAP=0,
-)
-
-
-modified_arguments = ["dNAO", "per0"]
-factors = np.array([0.1, 0.5, 1, 2, 5])
-
-# create all the experiment setups
-experiment_setups = dict()
-for key in modified_arguments:
-    # make sure to not go into too much details
-    experiment_setups[key] = np.round(default_settings[key] * factors, 6)
-
-# all experiment settings are made up by the all combinations of the experiment setups
-experiment_settings = list(product_dict(**experiment_setups))
-
-# %%
-ExperimentID = 665803199114752138
-SubdataPath = "parameter-experiments-storage"
-MlflowPath = "mlruns"
+# Verify the Path
 ThisPath = Path(__file__)
 RepoPath = ThisPath.parent.parent
 print(f"Is this the Repository Path correct?:\n{RepoPath}")
@@ -142,16 +57,99 @@ except:
     raise UserWarning(
         f"User stopped the code due to incorrect Repository Path\n{RepoPath}"
     )
+
+# LOAD THE MLFLOW SETUP FILES
+with open(RepoPath / "data" / "mlflow_setup.yaml", "r") as stream:
+    try:
+        MLFLOW_SETUP = yaml.safe_load(stream)
+        mlflow_setup = MLFLOW_SETUP["mlflow_setup"]
+        MlflowPath = mlflow_setup["mlflow_path"]
+        ExperimentID = mlflow_setup["experiment_id"]
+        SubdataPath = mlflow_setup["subdata_path"]
+    except yaml.YAMLError as exc:
+        print(exc)
+
+# LOAD THE GENERAL SETUP
+with open(RepoPath / "data" / "general_setup_spunge_ocean.yaml", "r") as stream:
+    try:
+        general_setup = yaml.safe_load(stream)
+        model_setup = general_setup["model_setup"]
+        kalman_setup = general_setup["kalman_setup"]
+        random_setup = general_setup["random_setup"]
+        function_setup = general_setup["function_setup"]
+    except yaml.YAMLError as exc:
+        print(exc)
+# load the corresponding function from the libraries:
+#  IMPORT THE MODEL FUNCTION
+try:
+    model_function = model_setup["model_function"]
+    if "AMO_oscillatory_ocean" in model_function:
+        from reconstruct_climate_indices.idealized_ocean import (
+            AMO_oscillatory_ocean as model_function,
+        )
+    elif "spunge_ocean" in model_function:
+        from reconstruct_climate_indices.idealized_ocean import (
+            spunge_ocean as model_function,
+        )
+    elif "oscillatory_ocean" in model_function:
+        from reconstruct_climate_indices.idealized_ocean import (
+            oscillatory_ocean as model_function,
+        )
+    else:
+        raise ValueError(
+            f"The provided model function {model_function} is not available"
+        )
+except Exception as e:
+    raise e
+#  IMPORT THE KALMAN FUNCTION
+try:
+    processing_function = kalman_setup["processing_function"]
+    if "xarray_Kalman_SEM" in processing_function:
+        from kalman_reconstruction.pipeline import (
+            xarray_Kalman_SEM as processing_function,
+        )
+    else:
+        raise ValueError(
+            f"The provided model function {processing_function} is not available"
+        )
+except Exception as e:
+    raise e
+
+print(f"Model_function is:{model_function}")
+print(f"processing_function is:{processing_function}")
+
+
+def product_dict(**kwargs):
+    keys = kwargs.keys()
+    for instance in itertools.product(*kwargs.values()):
+        yield dict(zip(keys, instance))
+
+
+# create all the experiment setups
+
+
+experiment_setups = dict()
+for key in model_setup["modified_arguments"]:
+    # make sure to not go into too much details
+    experiment_setups[key] = np.round(
+        a=model_setup["default_settings"][key] * np.array(model_setup["factors"]),
+        decimals=model_setup["numpy_round_factor"],
+    )
+
+# all experiment settings are made up by the all combinations of the experiment setups
+experiment_settings = list(product_dict(**experiment_setups))
+
+
 print("------------\nStart tracking of the experiment!\n------------\n")
 set_tracking_uri(RepoPath / MlflowPath)
 with start_run(experiment_id=ExperimentID) as run:
-    # prepare the parameter_settings to indlude all arrays used in the experiment_setup
-    parameter_settings = dict()
-    parameter_settings.update(default_settings)
-    parameter_settings.update(experiment_setups)
-    for key in parameter_settings:
+    # prepare the parameter_setup to indlude all arrays used in the experiment_setup
+    parameter_setup = dict()
+    parameter_setup.update(model_setup["default_settings"])
+    parameter_setup.update(experiment_setups)
+    for key in parameter_setup:
         try:
-            parameter_settings[key] = parameter_settings[key].tolist()
+            parameter_setup[key] = parameter_setup[key].tolist()
         except:
             pass
     # set the tracking_uri
@@ -164,8 +162,9 @@ with start_run(experiment_id=ExperimentID) as run:
     SubdataPath.mkdir(parents=True, exist_ok=True)
 
     # Create file names to store the  different settings
-    ParameterSettingsPath = SubdataPath / f"{run_id}_parameter_settings.yml"
-    KalmanSettingsPath = SubdataPath / f"{run_id}_kalman_settings.yml"
+    SettingsPath = SubdataPath / f"{run_id}_settings.yaml"
+    ParameterSettingsPath = SubdataPath / f"{run_id}_parameter_setup.yaml"
+    KalmanSettingsPath = SubdataPath / f"{run_id}_kalman_setup.yaml"
     InputFile = SubdataPath / f"{run_id}_input.nc"
     KalmanFile = SubdataPath / f"{run_id}_kalman.nc"
 
@@ -176,10 +175,11 @@ with start_run(experiment_id=ExperimentID) as run:
             KalmanFunction=processing_function.__name__,
         )
     )
-    log_params(kalman_settings)
-    log_params(parameter_settings)
+    log_params(kalman_setup)
+    log_params(parameter_setup)
     log_params(
         dict(
+            SettingsFile=SettingsPath.relative_to(RepoPath).as_posix(),
             ParameterSettingsFile=ParameterSettingsPath.relative_to(
                 RepoPath
             ).as_posix(),
@@ -188,11 +188,14 @@ with start_run(experiment_id=ExperimentID) as run:
             KalmanFile=KalmanFile.relative_to(RepoPath).as_posix(),
         )
     )
+    with open(SettingsPath, "w") as yaml_file:
+        yaml.dump(general_setup, yaml_file, default_flow_style=False)
     with open(ParameterSettingsPath, "w") as yaml_file:
-        yaml.dump(parameter_settings, yaml_file, default_flow_style=False)
+        yaml.dump(parameter_setup, yaml_file, default_flow_style=False)
     with open(KalmanSettingsPath, "w") as yaml_file:
-        yaml.dump(kalman_settings, yaml_file, default_flow_style=False)
+        yaml.dump(kalman_setup, yaml_file, default_flow_style=False)
     # log artifact of the settings
+    log_artifact(SettingsPath.as_posix())
     log_artifact(ParameterSettingsPath.as_posix())
     log_artifact(KalmanSettingsPath.as_posix())
 
@@ -203,7 +206,7 @@ with start_run(experiment_id=ExperimentID) as run:
     # The results will be combined into a single Dataset
     print("Create experiments")
     data_list = []
-    setting = default_settings.copy()
+    setting = model_setup["default_settings"].copy()
     # we will not track each individual model run.
     expand_ds = xr.Dataset(
         coords=experiment_setups,
@@ -224,26 +227,32 @@ with start_run(experiment_id=ExperimentID) as run:
     experiments.to_netcdf(InputFile)
     print("Done!")
 
-    # %% [markdown]
     # #### Run the ``xarray_Kalman_SEM`` function from the ``pipeline`` library.
     #
     # The ``run_function_on_multiple_subdatasets`` function allows to run the input function on all ``subdatasets`` specified by the ``subdataset_selections``. In this case these selections are given by the ``experiment_settings``.
-
-    # %%
-    print(f"Run Kalman SEM for : {nb_iter_SEM} iterations")
+    # Create random variables as needed
     input_kalman = experiments.copy()
-    pipeline.add_random_variable(
-        ds=input_kalman,
-        var_name="latent",
-        random_generator=rng1,
-        variance=random_variance,
+    rng_seed = random_setup["seed"]
+    for random_var in random_setup["name_random_variables"]:
+        rng = np.random.default_rng(seed=rng_seed)
+        pipeline.add_random_variable(
+            ds=input_kalman,
+            var_name=random_var,
+            random_generator=rng,
+            variance=random_setup["random_variance"],
+        )
+        rng_seed + 1
+
+    print(
+        f"Run {processing_function.__name__} for : {function_setup['func_kwargs']['nb_iter_SEM']} iterations"
     )
+
     experiments_kalman = pipeline.run_function_on_multiple_subdatasets(
         processing_function=processing_function,
         parent_dataset=input_kalman,
         subdataset_selections=experiment_settings,
-        func_args=func_args,
-        func_kwargs=func_kwargs,
+        func_args=function_setup["func_args"],
+        func_kwargs=function_setup["func_kwargs"],
     )
     print("Done!")
     # ---- Save Files ----
