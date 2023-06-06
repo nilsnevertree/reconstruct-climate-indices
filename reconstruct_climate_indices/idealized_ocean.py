@@ -89,7 +89,6 @@ def spunge_ocean(
 
     # Precomputation
     l0 = 2 / tau0  # Inverse restoring timescale
-    o0 = 2 * np.pi / per0  # Inverse oscillation timescale
 
     # Generate random forcing
     random_forcing = np.random.default_rng(seed=seed).normal(0, df, nt)
@@ -117,22 +116,22 @@ def spunge_ocean(
         coords=dict(
             time=(["time"], time),
             time_years=(["time"], timep),
-            ocean_restoring_timescale=(["ocean_restoring_timescale"], [tau0]),
-            stochastic_forcing_intensity=(["stochastic_forcing_intensity"], [df]),
         ),
         data_vars=dict(
             random_forcing=(["time"], random_forcing),
             surface_air_temperature=(
-                ["time", "ocean_restoring_timescale", "stochastic_forcing_intensity"],
-                SAT[:, np.newaxis, np.newaxis],
+                ["time"],
+                SAT,
             ),
             sponge_sea_surface_temperature=(
-                ["time", "ocean_restoring_timescale", "stochastic_forcing_intensity"],
-                SST[:, np.newaxis, np.newaxis],
+                ["time"],
+                SST,
             ),
         ),
         attrs=dict(
             coder="Florian Sévellec <florian.sevellec@univ-brest.fr>",
+            stochastic_forcing_intensity=df,
+            ocean_restoring_timescale=tau0,
         ),
     )
 
@@ -229,42 +228,33 @@ def oscillatory_ocean(
         coords=dict(
             time=(["time"], time),
             time_years=(["time"], timep),
-            ocean_restoring_timescale=(["ocean_restoring_timescale"], [tau0]),
-            ocean_oscillation_timescale=(["ocean_oscillation_timescale"], [per0]),
-            stochastic_forcing_intensity=(["stochastic_forcing_intensity"], [df]),
         ),
         data_vars=dict(
             random_forcing=(["time"], random_forcing),
             surface_air_temperature=(
                 [
                     "time",
-                    "ocean_restoring_timescale",
-                    "ocean_oscillation_timescale",
-                    "stochastic_forcing_intensity",
                 ],
-                SAT[:, np.newaxis, np.newaxis, np.newaxis],
+                SAT,
             ),
             oscillator_sea_surface_temperature=(
                 [
                     "time",
-                    "ocean_restoring_timescale",
-                    "ocean_oscillation_timescale",
-                    "stochastic_forcing_intensity",
                 ],
-                SST[:, np.newaxis, np.newaxis, np.newaxis],
+                SST,
             ),
             oscillator_deep_ocean_temperature=(
                 [
                     "time",
-                    "ocean_restoring_timescale",
-                    "ocean_oscillation_timescale",
-                    "stochastic_forcing_intensity",
                 ],
-                DOT[:, np.newaxis, np.newaxis, np.newaxis],
+                DOT,
             ),
         ),
         attrs=dict(
             coder="Florian Sévellec <florian.sevellec@univ-brest.fr>",
+            stochastic_forcing_intensity=df,
+            ocean_restoring_timescale=tau0,
+            ocean_oscillation_timescale=per0,
         ),
     )
 

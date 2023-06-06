@@ -77,6 +77,8 @@ target/
 
 # exclude data from source control by default
 data/*
+!data/setups*
+data/setups_custom/*.yaml
 !data/*.py
 
 # Mac OS-specific storage files
@@ -98,3 +100,6 @@ results/*
 # For MlFLow need to exclude the tracking folder
 mlruns/*
 mlflow-artifacts/*
+
+# Include all .gitkeep files
+!*/*.gitkeep

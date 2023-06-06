@@ -104,9 +104,22 @@ rng1 = np.random.default_rng(seed=seed)
 #
 # The model used is the ``AMO_oscillatory_ocean``. The parameters ``dNAO`` and ``dEAP`` will be changed.
 
+# %% In this different slices from the same model will be used to create kalman analysis.
+
+duration_single_analyis = int(400 * 365.25)
+number_of_analysis = 3**2
+nt = number_of_analysis * duration_single_analyis
+start_times = np.arange(0, nt, duration_single_analyis)
+
+time_slices = [
+    slice(start_time, start_time + duration_single_analyis - 1)
+    for start_time in start_times
+]
+
+experiment_setups = dict(time=time_slices)
 # %%
 default_settings = dict(
-    nt=1000,  # timesteps
+    nt=nt,  # timesteps
     dt=30,  # days
     per0=24 * 365.25,  # days
     tau0=10 * 365.25,  # days
@@ -116,21 +129,21 @@ default_settings = dict(
 )
 
 
-modified_arguments = ["per0", "tau0"]
-factors = np.array([0.5, 1, 2])
+# modified_arguments = ["dNAO", "per0"]
+# factors = np.array([0.1, 0.5, 1, 2, 5])
 
-# create all the experiment setups
-experiment_setups = dict()
-for key in modified_arguments:
-    # make sure to not go into too much details
-    experiment_setups[key] = np.round(default_settings[key] * factors, 6)
+# # create all the experiment setups
+# experiment_setups = dict()
+# for key in modified_arguments:
+#     # make sure to not go into too much details
+#     experiment_setups[key] = np.round(default_settings[key] * factors, 6)
 
-# all experiment settings are made up by the all combinations of the experiment setups
+# # all experiment settings are made up by the all combinations of the experiment setups
 experiment_settings = list(product_dict(**experiment_setups))
 
 # %%
-ExperimentID = 665803199114752138
-SubdataPath = "parameter-experiments-storage"
+ExperimentID = 221777028065508978
+SubdataPath = "amo-oscillator-time-slice-experiment"
 MlflowPath = "mlruns"
 ThisPath = Path(__file__)
 RepoPath = ThisPath.parent.parent
@@ -147,7 +160,9 @@ with start_run(experiment_id=ExperimentID) as run:
     # prepare the parameter_settings to indlude all arrays used in the experiment_setup
     parameter_settings = dict()
     parameter_settings.update(default_settings)
-    parameter_settings.update(experiment_setups)
+    parameter_settings["duration_single_analyis"] = duration_single_analyis
+    parameter_settings["number_of_analysis"] = number_of_analysis
+
     for key in parameter_settings:
         try:
             parameter_settings[key] = parameter_settings[key].tolist()
@@ -181,6 +196,15 @@ with start_run(experiment_id=ExperimentID) as run:
             KalmanFile=KalmanFile.relative_to(RepoPath).as_posix(),
         )
     )
+    # after logging, update time_slices
+    parameter_settings["time_slices"] = [
+        dict(
+            start=float(s.start),
+            stop=float(s.stop),
+        )
+        for s in experiment_setups["time"]
+    ]
+
     with open(ParameterSettingsPath, "w") as yaml_file:
         yaml.dump(parameter_settings, yaml_file, default_flow_style=False)
     with open(KalmanSettingsPath, "w") as yaml_file:
@@ -195,23 +219,9 @@ with start_run(experiment_id=ExperimentID) as run:
     #
     # The results will be combined into a single Dataset
     print("Create experiments")
-    data_list = []
     setting = default_settings.copy()
     # we will not track each individual model run.
-    expand_ds = xr.Dataset(
-        coords=experiment_setups,
-    )
-    for sub_setting in tqdm(experiment_settings):
-        # update the settings with the current set from the experiment settings.
-        setting.update(**sub_setting)
-        # integrate the model and store the output xr.Dataset
-        data = AMO_oscillatory_ocean(**setting)
-        data = pipeline.expand_and_assign_coords(
-            ds1=data, ds2=expand_ds, select_dict=sub_setting
-        )
-        data_list.append(data)
-    # merge all output Dataset into a single Dataset
-    experiments = xr.merge(data_list)
+    experiments = AMO_oscillatory_ocean(**setting)
     print("Done!")
     print("Save experiments file.")
     experiments.to_netcdf(InputFile)
@@ -231,10 +241,10 @@ with start_run(experiment_id=ExperimentID) as run:
         random_generator=rng1,
         variance=random_variance,
     )
-    experiments_kalman = pipeline.run_function_on_multiple_subdatasets(
+    experiments_kalman = pipeline.run_function_on_multiple_time_slices(
         processing_function=pipeline.xarray_Kalman_SEM,
         parent_dataset=input_kalman,
-        subdataset_selections=experiment_settings,
+        time_slices=experiment_settings,
         func_args=func_args,
         func_kwargs=func_kwargs,
     )
