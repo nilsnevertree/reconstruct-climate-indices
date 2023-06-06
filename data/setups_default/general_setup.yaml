@@ -1,0 +1,60 @@
+## SETTINGS FOR MODEL FUNCTION
+# For examples see bottom:
+
+Example setup
+AMO_oscillatory_ocean
+model_setup : 
+    # The model function used for all experiments
+    model_function : "idealized_ocean.AMO_oscillatory_ocean"
+    # dictonary containing the default settings that shall later be modified.
+    default_settings : { 
+            nt: 3000,  # timesteps in 50 * 12
+            dt: 30,  # days
+            per0: 8766,    # days 8766 = 24 * 365.25
+            tau0: 3652.5,  # days 3652.5 = 10* 365.25
+            dNAO: 0.1,
+            dEAP: 0.1,
+            cNAOvsEAP: 0,
+        }
+    modified_arguments : ["dNAO", "dEAP"]
+    factors :  [0.5, 1, 2]
+    numpy_round_factor : 6
+
+## SETTINGS FOR KALMAN SEM
+kalman_setup : 
+    processing_function : "pipeline.xarray_Kalman_SEM"
+    # itterations of the kalman SEM
+    nb_iter_SEM : &nb_iter_SEM 30
+    # observation variables
+    observation_variables : &observation_variables
+        - "AMO"
+        - "NAO" 
+        - "EAP"
+    # state variables
+    state_variables : &state_variables
+        - "AMO" 
+        - "NAO" 
+        - "EAP" 
+        - "latent"
+
+## RANDOM SETTING USED FOR THE RANDOM VARIBALE
+random_setup : 
+    # seed for the randomnumber generator
+    # Random number generators used to create the latent varibale will take the seed
+    seed : &seed 39266
+    # Varaince of the randomly initialized latent variable
+    random_variance : &random_variance  1
+    name_random_variables : 
+        - "latent"
+
+# arguments used for the 
+function_setup : 
+    # positional args for the kalman_SEM algorithm
+    func_args :  {}
+    # key word args for the kalman_SEM algorithm
+    func_kwargs :  {
+        observation_variables: *observation_variables,
+        state_variables: *state_variables,
+        nb_iter_SEM: *nb_iter_SEM,
+        }
+
