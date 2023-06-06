@@ -119,11 +119,11 @@ def spunge_ocean(
         ),
         data_vars=dict(
             random_forcing=(["time"], random_forcing),
-            surface_air_temperature=(
+            SAT=(
                 ["time"],
                 SAT,
             ),
-            sponge_sea_surface_temperature=(
+            SST=(
                 ["time"],
                 SST,
             ),
@@ -231,19 +231,19 @@ def oscillatory_ocean(
         ),
         data_vars=dict(
             random_forcing=(["time"], random_forcing),
-            surface_air_temperature=(
+            SAT=(
                 [
                     "time",
                 ],
                 SAT,
             ),
-            oscillator_sea_surface_temperature=(
+            SST=(
                 [
                     "time",
                 ],
                 SST,
             ),
-            oscillator_deep_ocean_temperature=(
+            DOT=(
                 [
                     "time",
                 ],
