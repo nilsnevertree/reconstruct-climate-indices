@@ -1,8 +1,8 @@
 ## SETTINGS FOR MODEL FUNCTION
 # For examples see bottom:
 
-Example setup
-AMO_oscillatory_ocean
+# Example setup
+# AMO_oscillatory_ocean
 model_setup :
     # The model function used for all experiments
     model_function : "idealized_ocean.AMO_oscillatory_ocean"
