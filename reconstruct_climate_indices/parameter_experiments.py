@@ -22,12 +22,12 @@
 #     └───RepoPath
 #         └───data
 #             └───SubdataPath
-#                 └───run_id
-#                     │    run_id_input.nc
-#                     │    run_id_kalman.nc
-#                     │    run_id_kalman_setup.yml
-#                     │    run_id_parameter_setup.yml
-# Where ``run_id`` is e.g. *553cbd3bc6ce44028c8daad12647c306*
+#                 └───run_name
+#                     │    run_name_input.nc
+#                     │    run_name_kalman.nc
+#                     │    run_name_kalman_setup.yml
+#                     │    run_name_parameter_setup.yml
+# Where ``run_name`` is e.g. *553cbd3bc6ce44028c8daad12647c306*
 #
 
 
@@ -35,8 +35,8 @@ import argparse
 from pathlib import Path
 
 parser = argparse.ArgumentParser(description='Description see file.')
-parser.add_argument("--general_path", default= Path("data") / Path("setups") / "general_setup.yaml", help="path relative to REPO_PATH to the general setup stored in a .yaml file")
-parser.add_argument("--mlflow_path",  default= Path("data") / Path("setups") / "mlflow_setup.yaml",  help="path relative to REPO_PATH to the mlflow setup stored in a .yaml file")
+parser.add_argument("--general_path", default= Path("data") / Path("setups_default") / "general_setup.yaml", help="path relative to REPO_PATH to the general setup stored in a .yaml file")
+parser.add_argument("--mlflow_path",  default= Path("data") / Path("setups_default") / "mlflow_setup.yaml",  help="path relative to REPO_PATH to the mlflow setup stored in a .yaml file")
 
 args = parser.parse_args()
 print("Start imports.")
@@ -165,20 +165,26 @@ with start_run(experiment_id=ExperimentID) as run:
         except:
             pass
     # set the tracking_uri
-    # retrieve the run_id
+    # retrieve the run_name
+    run_name = run.info.run_name
     run_id = run.info.run_id
+
+    # update run_name and run_name into the mlflow_setups
+    mlflow_setup["run_name"] = run_name
+    mlflow_setup["run_id"] = run_id
 
     # Create Paths to the corresponding directories names
     DataPath = RepoPath / "data"
-    SubdataPath = DataPath / SubdataPath / f"{run_id}"
+    SubdataPath = DataPath / SubdataPath / f"{run_name}"
     SubdataPath.mkdir(parents=True, exist_ok=True)
 
     # Create file names to store the  different settings
-    SettingsPath = SubdataPath / f"{run_id}_settings.yaml"
-    ParameterSettingsPath = SubdataPath / f"{run_id}_parameter_setup.yaml"
-    KalmanSettingsPath = SubdataPath / f"{run_id}_kalman_setup.yaml"
-    InputFile = SubdataPath / f"{run_id}_input.nc"
-    KalmanFile = SubdataPath / f"{run_id}_kalman.nc"
+    SettingsPath = SubdataPath / f"{run_name}_setup.yaml"
+    MlflowSettingsPath = SubdataPath / f"{run_name}_mlflow_setup.yaml"
+    ParameterSettingsPath = SubdataPath / f"{run_name}_parameter_setup.yaml"
+    KalmanSettingsPath = SubdataPath / f"{run_name}_kalman_setup.yaml"
+    InputFile = SubdataPath / f"{run_name}_input.nc"
+    KalmanFile = SubdataPath / f"{run_name}_kalman.nc"
 
     # log all settings and file locations.
     log_params(
@@ -202,6 +208,8 @@ with start_run(experiment_id=ExperimentID) as run:
     )
     with open(SettingsPath, "w") as yaml_file:
         yaml.dump(general_setup, yaml_file, default_flow_style=False)
+    with open(MlflowSettingsPath, "w") as yaml_file:
+        yaml.dump(mlflow_setup, yaml_file, default_flow_style=False)
     with open(ParameterSettingsPath, "w") as yaml_file:
         yaml.dump(parameter_setup, yaml_file, default_flow_style=False)
     with open(KalmanSettingsPath, "w") as yaml_file:
@@ -275,4 +283,4 @@ with start_run(experiment_id=ExperimentID) as run:
 end_run()
 print("------------\nTracking Done!------------\n")
 print(f"ExperimentID : {ExperimentID}")
-print(f"RunID : {run_id}")
+print(f"RunID : {run_name}")
