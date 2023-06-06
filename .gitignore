@@ -99,6 +99,7 @@ results/*
 
 # For MlFLow need to exclude the tracking folder
 mlruns/*
-!mlruns/.gitkeep
 mlflow-artifacts/*
-!mlflow-artifacts/.gitkeep
+
+# Include all .gitkeep files
+!*/*.gitkeep
