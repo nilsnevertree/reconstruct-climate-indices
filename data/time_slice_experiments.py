@@ -104,10 +104,7 @@ rng1 = np.random.default_rng(seed=seed)
 #
 # The model used is the ``AMO_oscillatory_ocean``. The parameters ``dNAO`` and ``dEAP`` will be changed.
 
-# %%
-"""
-In this different slices from the same model will be used to create kalman analysis.
-"""
+# %% In this different slices from the same model will be used to create kalman analysis.
 
 duration_single_analyis = int(400 * 365.25)
 number_of_analysis = 3**2
