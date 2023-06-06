@@ -32,17 +32,25 @@
 
 
 import argparse
+
 from pathlib import Path
 
-parser = argparse.ArgumentParser(description='Description see file.')
-parser.add_argument("--general_path", default= Path("data") / Path("setups_default") / "general_setup.yaml", help="path relative to REPO_PATH to the general setup stored in a .yaml file")
-parser.add_argument("--mlflow_path",  default= Path("data") / Path("setups_default") / "mlflow_setup.yaml",  help="path relative to REPO_PATH to the mlflow setup stored in a .yaml file")
+
+parser = argparse.ArgumentParser(description="Description see file.")
+parser.add_argument(
+    "--general_path",
+    default=Path("data") / Path("setups_default") / "general_setup.yaml",
+    help="path relative to REPO_PATH to the general setup stored in a .yaml file",
+)
+parser.add_argument(
+    "--mlflow_path",
+    default=Path("data") / Path("setups_default") / "mlflow_setup.yaml",
+    help="path relative to REPO_PATH to the mlflow setup stored in a .yaml file",
+)
 
 args = parser.parse_args()
 print("Start imports.")
 import itertools
-
-
 
 import numpy as np
 import xarray as xr

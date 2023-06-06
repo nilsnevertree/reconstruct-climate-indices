@@ -8,4 +8,3 @@ mlflow_setup:
   subdata_path : "simplified_ocean_experiments"
   # this sets the path where the mlruns files are stored and accessed
   mlflow_path : "mlruns"
-  
