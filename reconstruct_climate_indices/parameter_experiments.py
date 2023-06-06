@@ -31,10 +31,18 @@
 #
 
 
+import argparse
+from pathlib import Path
+
+parser = argparse.ArgumentParser(description='Description see file.')
+parser.add_argument("--general_path", default= Path("data") / Path("setups") / "general_setup.yaml", help="path relative to REPO_PATH to the general setup stored in a .yaml file")
+parser.add_argument("--mlflow_path",  default= Path("data") / Path("setups") / "mlflow_setup.yaml",  help="path relative to REPO_PATH to the mlflow setup stored in a .yaml file")
+
+args = parser.parse_args()
 print("Start imports.")
 import itertools
 
-from pathlib import Path
+
 
 import numpy as np
 import xarray as xr
@@ -58,8 +66,12 @@ except:
         f"User stopped the code due to incorrect Repository Path\n{RepoPath}"
     )
 
+general_path = RepoPath / Path(args.general_path)
+mlflow_path = RepoPath / Path(args.mlflow_path)
+
+
 # LOAD THE MLFLOW SETUP FILES
-with open(RepoPath / "data" / "mlflow_setup.yaml", "r") as stream:
+with open(mlflow_path, "r") as stream:
     try:
         MLFLOW_SETUP = yaml.safe_load(stream)
         mlflow_setup = MLFLOW_SETUP["mlflow_setup"]
@@ -70,7 +82,7 @@ with open(RepoPath / "data" / "mlflow_setup.yaml", "r") as stream:
         print(exc)
 
 # LOAD THE GENERAL SETUP
-with open(RepoPath / "data" / "general_setup_spunge_ocean.yaml", "r") as stream:
+with open(general_path, "r") as stream:
     try:
         general_setup = yaml.safe_load(stream)
         model_setup = general_setup["model_setup"]
