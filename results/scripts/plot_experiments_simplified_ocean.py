@@ -13,6 +13,7 @@ args = parser.parse_args()
 print("Start imports.")
 
 import itertools
+
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
@@ -31,7 +32,6 @@ from tqdm import tqdm
 set_custom_rcParams()
 plt.rcParams["figure.figsize"] = (15, 15)
 colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
-
 
 
 # %% [markdown]
@@ -70,9 +70,9 @@ observation_variables = kalman_settings["observation_variables"]
 
 
 # %%
-try :
+try:
     experiments = experiments.drop("random_forcing")
-except Exception :
+except Exception:
     pass
 
 
@@ -88,7 +88,6 @@ def save_fig(fig, relative_path, **kwargs):
         fig.savefig(store_path, **kwargs)
     else:
         pass
-
 
 
 # %%
@@ -240,7 +239,7 @@ for i, mod1 in tqdm(enumerate(experiments[mod_arg_1])):
             color=color,
             alpha=0.7,
         )
-        try : 
+        try:
             # plot DOT
             handles["DOT truth"] = axs[i, j].plot(
                 time_years,
@@ -248,9 +247,9 @@ for i, mod1 in tqdm(enumerate(experiments[mod_arg_1])):
                 label="DOT truth",
                 alpha=0.7,
             )
-        except : 
+        except:
             pass
-        try : 
+        try:
             # set same color as in oscillator_sea_surface_temperature turth but darker
             color = adjust_lightness(handles["DOT truth"][0].get_color())
             handles["DOT"] = axs[i, j].plot(
@@ -307,9 +306,7 @@ for i, mod1 in tqdm(enumerate(experiments[mod_arg_1])):
             mod_arg_1: mod1,
             mod_arg_2: mod2,
         }
-        reconst = normalize(
-            experiments_kalman_states.sel(select_dict)
-        )
+        reconst = normalize(experiments_kalman_states.sel(select_dict))
         truth = normalize(experiments.sel(select_dict))
         for k, state in enumerate(observation_variables):
             handles[k] = axs[i, j].scatter(
@@ -341,7 +338,6 @@ fig.tight_layout()
 save_fig(fig, "Truth-against-KalmanSEM-result.png", dpi=400)
 
 
-
 # %%
 experiments_kalman_states = normalize(experiments_kalman_states)
 fig, axs = plt.subplots(
@@ -355,12 +351,10 @@ for i, mod1 in tqdm(enumerate(experiments[mod_arg_1])):
             mod_arg_1: mod1,
             mod_arg_2: mod2,
         }
-        reconst = normalize(
-            experiments_kalman_states.sel(select_dict)
-        )
+        reconst = normalize(experiments_kalman_states.sel(select_dict))
         truth = normalize(experiments.sel(select_dict))
         for k, state in enumerate(experiments.data_vars):
-            try : 
+            try:
                 corr = xr.corr(truth[state], reconst["latent"])
                 axs[i, j].scatter(
                     truth[state],
@@ -369,7 +363,7 @@ for i, mod1 in tqdm(enumerate(experiments[mod_arg_1])):
                     alpha=np.abs(corr.values),
                     label=f"{state} : {corr:.2f}",
                 )
-            except : 
+            except:
                 pass
         axs[i, j].set_title(f"{mod_arg_1}: {mod1:.2f}, {mod_arg_2}: {mod2:.2f}")
         axs[i, j].set_xlabel("truth")
@@ -385,6 +379,3 @@ fig.suptitle(
 )
 # save_fig(fig, "svgs\deterministic-evolution-kalman.svg")
 save_fig(fig, "Truth-against-LatentVariable-result.png", dpi=400)
-
-
-
