@@ -1,10 +1,15 @@
-# %%
+"""
+This file plots the results from the ``data/scripts/parameter_experiments.py``.
+The run-name needs to be provided e.g. ``--run_name`` "snacky-snacke-234".
+The run-name can be chosen with the help of the mlflow server.
+for that run ``mlflow ui`` in the shell in the Repository path.
+"""
 import argparse
 
 from pathlib import Path
 
 
-parser = argparse.ArgumentParser(description="Description see file.")
+parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument(
     "--run_name",
     help="Name of the mlflow run you want to plot",
@@ -25,7 +30,7 @@ from kalman_reconstruction.custom_plot import (
     handler_map_alpha,
     set_custom_rcParams,
 )
-from kalman_reconstruction.statistics import normalize
+from kalman_reconstruction.statistics import compute_fft_spectrum, normalize
 from tqdm import tqdm
 
 
@@ -39,12 +44,14 @@ colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 
 # %%
 run_name = args.run_name
+REPO_PATH = Path(__file__).parent.parent.parent
 SubdataPath = "simplified_ocean_experiments"
-RunPath = Path(__file__).parent.parent / "data" / SubdataPath / run_name
+RunPath = REPO_PATH / "data" / SubdataPath / run_name
 InputPath = RunPath / (run_name + "_input.nc")
 KalmanPath = RunPath / (run_name + "_kalman.nc")
 ParameterSettingsPath = RunPath / (run_name + "_parameter_setup.yaml")
 KalmanSettingsPath = RunPath / (run_name + "_kalman_setup.yaml")
+
 experiments = xr.open_dataset(InputPath)
 experiments_kalman = xr.open_dataset(KalmanPath)
 experiments_kalman_states = pipeline.from_standard_dataset(experiments_kalman)
@@ -67,6 +74,7 @@ modified_arguments = list(modified_arguments_dict.keys())
 mod_arg_1 = modified_arguments[0]
 mod_arg_2 = modified_arguments[1]
 observation_variables = kalman_settings["observation_variables"]
+state_variables = kalman_settings["state_variables"]
 
 
 # %%
@@ -77,7 +85,7 @@ except Exception:
 
 
 # %%
-PATH_FIGURES = Path("../results/") / SubdataPath / run_name
+PATH_FIGURES = REPO_PATH / Path("results") / SubdataPath / run_name
 SAVE_FIGURES = True
 
 
@@ -88,6 +96,65 @@ def save_fig(fig, relative_path, **kwargs):
         fig.savefig(store_path, **kwargs)
     else:
         pass
+
+
+# %%
+data_vars = list(experiments.data_vars) + state_variables
+data_vars = np.unique(data_vars)
+
+for var in tqdm(data_vars):
+    fig, axs = plt.subplots(
+        nrows=len(experiments[mod_arg_1]),
+        ncols=len(experiments[mod_arg_2]),
+        figsize=(15, 15),
+        sharey=True,
+        sharex=True,
+    )
+    for i, mod1 in enumerate(experiments[mod_arg_1]):
+        for j, mod2 in enumerate(experiments[mod_arg_2]):
+            select_dict = {
+                mod_arg_1: mod1,
+                mod_arg_2: mod2,
+            }
+            recon = experiments_kalman_states.sel(select_dict)
+            truth = experiments.sel(select_dict)
+            ax = axs[i, j]
+            try:
+                time = recon.time.values / 365.25  # from days to years
+                xf, yf, yf_plot, f_min, f_max = compute_fft_spectrum(
+                    time=time, signal=normalize(recon[var].values)
+                )
+                ax.loglog(xf, yf_plot, label=f"{var} recon.", alpha=0.7)
+            except Exception as KE:
+                pass
+                # print(var, KE.args[0])
+            try:
+                time = truth.time.values / 365.25  # from days to years
+                xf, yf, yf_plot, f_min, f_max = compute_fft_spectrum(
+                    time=time, signal=normalize(truth[var].values)
+                )
+                ax.loglog(xf, yf_plot, label=f"{var} truth", alpha=0.7)
+            except Exception as KE:
+                pass
+                # print(var, KE.args[0])
+            f_min = 1 / 100  #  years^{-1}
+            ax.set_xlim((f_min, f_max))
+            xticks = ax.get_xticks().copy()  # 1/years
+            new_ticks = np.round(1 / xticks, decimals=2)  # years
+            ax.set_xticks(ticks=xticks, labels=new_ticks)
+            ax.tick_params(axis="x", rotation=45)
+            f_min = 1 / 100  #  years^{-1}
+            ax.set_xlim((f_min, f_max))
+
+            ax.set_xlabel(r"Period in years")
+            ax.set_ylabel("Power in ????")
+            axs[i, j].set_title(f"{mod_arg_1}: {mod1:.2f}, {mod_arg_2}: {mod2:.2f}")
+            ax.legend()
+
+    # ax.set_ylim((10**(0.5), 10**(-5.5)))
+    fig.suptitle(f"{var} | frequency spectrum")
+    fig.tight_layout()
+    save_fig(fig, Path("freqency_spectra") / f"{var}-frequency-spektrum.png", dpi=400)
 
 
 # %%
