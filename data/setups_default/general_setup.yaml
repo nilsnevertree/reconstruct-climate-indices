@@ -1,11 +1,18 @@
 ## SETTINGS FOR MODEL FUNCTION
-# For examples see bottom:
-
+# with this settings file, the reconstruct-climate-indices/data/scripts/parameter_experiments.py file can be run.
+# It uses the kalman_reconstruction.pipeline.run_function_on_multiple_subdatasets function to call the:
+# kalman_setup :
+#    processing_function : ...
+# with the given positional and keyword arguments provided in
+# function_setup : ...
+#
+# NOTE: Make sure that the model_setup is chosen correct for the model_function you use.
 # Example setup
 # AMO_oscillatory_ocean
 model_setup :
     # The model function used for all experiments
     model_function : "idealized_ocean.AMO_oscillatory_ocean"
+    # 1. step
     # dictonary containing the default settings that shall later be modified.
     default_settings : {
             nt: 3000,  # timesteps in 50 * 12
@@ -15,10 +22,30 @@ model_setup :
             dNAO: 0.1,
             dEAP: 0.1,
             cNAOvsEAP: 0,
+            seed: 331381460666,
         }
+    ### The parameter_experiment.py file will create all combinations of parameters provided with the following settings in the model_setup dictonary.
+    # 2. step
+    # The values of the modified arguments will be multiplicated by the factors provided below.
     modified_arguments : ["dNAO", "dEAP"]
     factors :  [0.5, 1, 2]
-    numpy_round_factor : 6
+    numpy_round_factor : 6 # factor will be used as rounding for all changes settings using the factor list.
+    # 3. step
+    # The values in default settings and given by the modified arguemtns (step 2) will be OVERRIDEN by the lists provided in this dictonary.
+    modified_settings : {
+        seed : [
+            331381460666, # Default value of the idealized_ocean functions.
+            # 281919096187,
+            # 841890021701,
+            # 573526330895,
+            # 729014145638,
+            # 831545864661,
+            # 379772175813,
+            # 68282207887,
+            # 326575964518,
+            # 486318926357,
+        ]
+    }
 
 ## SETTINGS FOR KALMAN SEM
 kalman_setup :
@@ -47,7 +74,7 @@ random_setup :
     name_random_variables :
         - "latent"
 
-# arguments used for the
+# arguments used for the Kalman_SEM function which is called using the
 function_setup :
     # positional args for the kalman_SEM algorithm
     func_args :  {}
