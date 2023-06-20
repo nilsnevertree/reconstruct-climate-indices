@@ -268,6 +268,128 @@ def linear_regression_loglog(
     return f_res, spectrum_res, regression
 
 
+PDS_Info = TypedDict(
+    "PDS",
+    {
+        "frequencies": np.ndarray,
+        "spectrum": np.ndarray,
+    },
+)
+
+
+PDS_linear = TypedDict(
+    "PDS_LogLogRegression",
+    {
+        "frequencies": np.ndarray,
+        "spectrum": np.ndarray,
+        "regression": LinearRegression,
+        "slope": float,
+    },
+)
+
+
+def power_density_spectrum(
+    x: np.ndarray,
+    fs: float = 1,
+    window: str = "hann",
+    welch_window_width: int = np.inf,
+    linear_reg_kwargs: dict = dict(weights="f_inverse"),
+) -> Tuple[PDS_Info, PDS_Info, PDS_linear]:
+    """
+    Calculate the power density spectrum of a given signal using Welch's method
+    and perform linear regression on the log-log transformed spectrum.
+
+    This function calculates the power density spectrum of a given signal using Welch's method, which involves
+    applying a window function to the signal and estimating the spectrum using the Fast Fourier Transform (FFT).
+    The discrete FFT transform is used.
+    See also https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.welch.html
+
+    It also performs linear regression on the log-log transformed spectrum to estimate the slope.
+    The function ``linear_regression_loglog`` is used.
+
+
+    All three options are returned:
+    a) "frequencies", "spectrum" using infinite welch ``window`` of form "hann" -> NO welch method applied -> pure DFFT
+    b) "frequencies", "spectrum" using welch method
+    c) "frequencies", "spectrum", "regression" and "slope" using results from a) for ``linear_regression_loglog``.
+
+    Parameters:
+        x : np.ndarray
+            The input signal.
+        fs : float, optional
+            The sampling frequency of the input signal `x` (default: 1).
+        window : str, optional
+            The type of window to use in the Welch method (default: "hann").
+        welch_window_width : int, optional
+            The width of the Welch window in samples. If set to np.inf, the entire signal length is used (default: np.inf).
+        linear_reg_kwargs : dict, optional
+            Additional keyword arguments to pass to the linear regression fitting function ``linear_regression_loglog`` (default: {'weights': 'f_inverse'}).
+
+    Returns:
+        Tuple[PDS_Info, PDS_Info, PDS_linear]
+            A tuple containing the computed power density spectrum (PDS) and the results of linear regression.
+                1. "frequencies", "spectrum" using infinite welch ``window`` of form "hann" -> NO welch method applied -> pure DFFT
+                2. "frequencies", "spectrum" using welch method
+                3. "frequencies", "spectrum", "regression" and "slope" using results from a) for ``linear_regression_loglog``.
+
+    Examples:
+        # Example 1: Compute PDS and perform linear regression
+        >>> import numpy as np
+        >>> from scipy import signal
+        >>> from sklearn.linear_model import LinearRegression
+        >>> x = np.random.randn(1000)
+        >>> pds_pure, pds_welch, pds_linear = power_density_spectrum(x, fs=1000, window='hann')
+        >>> print("Pure PDS frequencies:", pds_pure['frequencies'])
+        >>> print("Pure PDS spectrum:", pds_pure['spectrum'])
+        >>> print("Welch PDS frequencies:", pds_welch['frequencies'])
+        >>> print("Welch PDS spectrum:", pds_welch['spectrum'])
+        >>> print("Linear PDS frequencies:", pds_linear['frequencies'])
+        >>> print("Linear PDS spectrum:", pds_linear['spectrum'])
+        >>> print("Linear regression slope:", pds_linear['slope'])
+
+        # Example 2: Compute PDS with custom Welch window width and linear regression parameters
+        >>> x = np.random.randn(2000)
+        >>> welch_width = 0.5
+        >>> linear_reg_params = {'weights': None}
+        >>> pds_pure, pds_welch, pds_linear = power_density_spectrum(x, fs=2000, window='hann', welch_window_width=welch_width, linear_reg_kwargs=linear_reg_params)
+        >>> print("Pure PDS frequencies:", pds_pure['frequencies'])
+        >>> print("Pure PDS spectrum:", pds_pure['spectrum'])
+        >>> print("Welch PDS frequencies:", pds_welch['frequencies'])
+        >>> print("Welch PDS spectrum:", pds_welch['spectrum'])
+        >>> print("Linear PDS frequencies:", pds_linear['frequencies'])
+        >>> print("Linear PDS spectrum:", pds_linear['spectrum'])
+        >>> print("Linear regression slope:", pds_linear['slope'])
+    """
+    frequencies, spectrum = signal.welch(x=x, fs=fs, window=window, nperseg=len(x))
+
+    frequencies_welch, spectrum_welch = signal.welch(
+        x=x, fs=fs, window=window, nperseg=int(welch_window_width * fs)
+    )
+
+    frequencies_linear, spectrum_linear, regression = linear_regression_loglog(
+        frequencies=frequencies, spectrum=spectrum, **linear_reg_kwargs
+    )
+
+    res_pure = dict(
+        frequencies=frequencies,
+        spectrum=spectrum,
+    )
+
+    res_welch = dict(
+        frequencies=frequencies_welch,
+        spectrum=spectrum_welch,
+    )
+
+    res_linear = dict(
+        frequencies=frequencies_linear,
+        spectrum=spectrum_linear,
+        regression=regression,
+        slope=regression.coef_[0, 0],
+    )
+
+    return res_pure, res_welch, res_linear
+
+
 WelchKwargs = TypedDict(
     "WelchKwargs",
     {
