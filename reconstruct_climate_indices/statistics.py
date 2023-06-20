@@ -27,6 +27,133 @@ def my_mean(x):
     return np.mean(x)
 
 
+def transform_to_loglog(x: np.ndarray) -> np.ndarray:
+    """
+    Transform an array of values to a logarithmic scale.
+
+    Parameters:
+        x : np.ndarray
+            The input array of values.
+
+    Returns:
+        np.ndarray
+            The transformed array of values.
+
+    Raises:
+        TypeError
+            If the input array has more than 1 dimension.
+
+    Examples:
+        # Example 1: Transform an array to a logarithmic scale
+        >>> import numpy as np
+        >>> x = np.array([1, 2, 3, 4, 5])
+        >>> transformed = transform_to_loglog(x)
+        >>> print(transformed)
+        array([0.        , 0.30103   , 0.47712125, 0.60205999, 0.69897   ])
+    """
+    if np.ndim(x) > 1:
+        raise TypeError("Only 1D arrays are supported.")
+
+    # only use values where x is not equal to zeros
+    x = x[x != 0]
+    x_log = np.log10(x)
+    x_log = x_log[np.isfinite(x_log)]
+    return x_log
+
+
+def fit_linear_regression_from_loglog(
+    frequencies: np.ndarray,
+    spectrum: np.ndarray,
+    f_low: float = -np.inf,
+    f_high: float = np.inf,
+    weights: Union[str, None, np.ndarray, list] = None,
+) -> LinearRegression:
+    """
+    Fit a linear regression model to a spectrum for a given frequency range in
+    a log10, log10 space.
+
+    Parameters:
+        frequencies (np.ndarray): The array of frequency values.
+        spectrum (np.ndarray): The array of spectrum values.
+        f_low (float): The lower frequency limit for fitting (default: -np.inf).
+        f_high (float): The upper frequency limit for fitting (default: np.inf).
+        weights (Union[str, None, np.ndarray, list]): Optional weights for the linear regression.
+            - If 'f_inverse', the weights are set as the inverse of frequencies.
+            - If None, "", "ones", "ONES", or "1", the weights are set as an array of ones.
+            - If an np.ndarray or a list, the weights are set as the provided array or list.
+            (default: None)
+
+    Returns:
+        LinearRegression: The fitted linear regression model.
+
+    Raises:
+        ValueError: If the given weights of type are not supported.
+
+    Examples:
+        # Example 1: Fit linear regression with default parameters
+        >>> import numpy as np
+        >>> from sklearn.linear_model import LinearRegression
+        >>> frequencies = np.array([1, 2, 3, 4, 5])
+        >>> spectrum = np.array([10, 20, 30, 40, 50])
+        >>> model = fit_linear_regression(frequencies, spectrum)
+        >>> intercept = model.intercept_
+        >>> slope = model.coef_[0]
+        >>> print("Intercept:", intercept)
+        >>> print("Slope:", slope)
+
+        # Example 2: Fit linear regression with specified frequency range and weights
+        >>> frequencies = np.array([1, 2, 3, 4, 5])
+        >>> spectrum = np.array([10, 20, 30, 40, 50])
+        >>> weights = [1, 2, 3, 4, 5]
+        >>> model = fit_linear_regression(frequencies, spectrum, f_low=2, f_high=4, weights=weights)
+        >>> intercept = model.intercept_
+        >>> slope = model.coef_[0]
+        >>> print("Intercept:", intercept)
+        >>> print("Slope:", slope)
+    """
+    # Filter data within the specified frequency range
+    mask = np.logical_and.reduce(
+        (frequencies >= f_low, frequencies <= f_high, frequencies != 0)
+    )
+    frequencies_filtered = frequencies[mask]
+    spectrum_filtered = spectrum[mask]
+
+    # Create log10 values of the original data
+
+    frequencies_log = np.log10(frequencies_filtered)
+    spectrum_log = np.log10(spectrum_filtered)
+
+    # Remove NaN and infinite values for all arrays
+    finite_mask = np.logical_and(
+        np.isfinite(frequencies_log), np.isfinite(spectrum_log)
+    )
+
+    frequencies_log = frequencies_log[finite_mask]
+    spectrum_log = spectrum_log[finite_mask]
+    frequencies_filtered = frequencies_filtered[finite_mask]
+    spectrum_filtered = spectrum_filtered[finite_mask]
+
+    # Set weights based on the provided option
+    if weights == "f_inverse":
+        weights = (frequencies_filtered) ** (-1)
+    elif weights in [None, "", "ones", "ONES", "1"]:
+        weights = np.ones_like(frequencies_filtered)
+    elif isinstance(weights, (np.ndarray, list)):
+        assert len(weights) == len(spectrum_filtered)
+        weights = np.array(weights)
+    else:
+        raise ValueError(
+            f"The given weights of type {type(weights)} are not supported."
+        )
+
+    # Fit linear regression
+    return LinearRegression().fit(
+        X=frequencies_log.reshape(-1, 1),
+        y=spectrum_log.reshape(-1, 1),
+        sample_weight=weights,
+    )
+
+
 WelchKwargs = TypedDict(
     "WelchKwargs",
     {
