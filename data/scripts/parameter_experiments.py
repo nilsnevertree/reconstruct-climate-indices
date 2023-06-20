@@ -44,19 +44,24 @@ parser.add_argument(
 )
 parser.add_argument(
     "--mlflow_path",
-    default=Path("data") / Path("setups_default") / "mlflow_setup.yaml",
+    default=Path("data") / Path("setups_default") / "mlflow_setup_nofactor.yaml",
     help="path relative to REPO_PATH to the mlflow setup stored in a .yaml file",
 )
 
 args = parser.parse_args()
 print("Start imports.")
 import itertools
+import warnings
 
 import numpy as np
 import xarray as xr
 import yaml
 
-from kalman_reconstruction import pipeline
+from kalman_reconstruction.pipeline import (
+    add_random_variable,
+    expand_and_assign_coords,
+    run_function_on_multiple_subdatasets,
+)
 from mlflow import end_run, log_artifact, log_params, set_tracking_uri, start_run
 from tqdm import tqdm
 
@@ -66,7 +71,9 @@ print("Done!")
 # Verify the Path
 ThisPath = Path(__file__)
 RepoPath = ThisPath.parent.parent.parent
-print(f"Is this the Repository Path correct?:\n{RepoPath}")
+print(
+    f"Is this the Repository Path correct?:\n{RepoPath}\nNote: The settings files are NOT yet loaded!"
+)
 try:
     assert "yes" == input("Write 'yes' any press Enter!\n")
 except:
@@ -74,9 +81,9 @@ except:
         f"User stopped the code due to incorrect Repository Path\n{RepoPath}"
     )
 
+print("------------\nLoad Settings from files!\n------------\n")
 general_path = RepoPath / Path(args.general_path)
 mlflow_path = RepoPath / Path(args.mlflow_path)
-
 
 # LOAD THE MLFLOW SETUP FILES
 with open(mlflow_path, "r") as stream:
@@ -87,7 +94,7 @@ with open(mlflow_path, "r") as stream:
         ExperimentID = mlflow_setup["experiment_id"]
         SubdataPath = mlflow_setup["subdata_path"]
     except yaml.YAMLError as exc:
-        print(exc)
+        raise (exc)
 
 # LOAD THE GENERAL SETUP
 with open(general_path, "r") as stream:
@@ -98,7 +105,7 @@ with open(general_path, "r") as stream:
         random_setup = general_setup["random_setup"]
         function_setup = general_setup["function_setup"]
     except yaml.YAMLError as exc:
-        print(exc)
+        raise (exc)
 # load the corresponding function from the libraries:
 #  IMPORT THE MODEL FUNCTION
 try:
@@ -146,9 +153,9 @@ def product_dict(**kwargs):
 
 
 # create all the experiment setups
-
-
 experiment_setups = dict()
+
+# Use factor multiplication for all arguments given in "modified_arguments"
 for key in model_setup["modified_arguments"]:
     # make sure to not go into too much details
     experiment_setups[key] = np.round(
@@ -156,7 +163,26 @@ for key in model_setup["modified_arguments"]:
         decimals=model_setup["numpy_round_factor"],
     )
 
-# all experiment settings are made up by the all combinations of the experiment setups
+# Use given list from model_setup for arguments given in "modified_settings".
+if "modified_settings" in model_setup:
+    for key in model_setup["modified_settings"]:
+        try:
+            experiment_setups[key] = model_setup["modified_settings"][key]
+        except Exception:
+            warnings.warn(
+                f"An Exception for {key} occured in using it from ``modified_settings``.\nThis key will be ignored!"
+            )
+else:
+    print("No 'modified_settings' dictonary was provided in the settings file.")
+
+
+print(f"Are those the experiment_setups you want to perform?:\n{experiment_setups}")
+try:
+    assert "yes" == input("Write 'yes' any press Enter!\n")
+except:
+    raise UserWarning(f"User stopped the code before tracking started.")
+
+# all experiment settings are made up by the all combinations of the experiment setups lists.
 experiment_settings = list(product_dict(**experiment_setups))
 
 
@@ -244,7 +270,7 @@ with start_run(experiment_id=ExperimentID) as run:
         setting.update(**sub_setting)
         # integrate the model and store the output xr.Dataset
         data = model_function(**setting)
-        data = pipeline.expand_and_assign_coords(
+        data = expand_and_assign_coords(
             ds1=data, ds2=expand_ds, select_dict=sub_setting
         )
         data_list.append(data)
@@ -255,15 +281,12 @@ with start_run(experiment_id=ExperimentID) as run:
     experiments.to_netcdf(InputFile)
     print("Done!")
 
-    # #### Run the ``xarray_Kalman_SEM`` function from the ``pipeline`` library.
-    #
-    # The ``run_function_on_multiple_subdatasets`` function allows to run the input function on all ``subdatasets`` specified by the ``subdataset_selections``. In this case these selections are given by the ``experiment_settings``.
     # Create random variables as needed
     input_kalman = experiments.copy()
     rng_seed = random_setup["seed"]
     for random_var in random_setup["name_random_variables"]:
         rng = np.random.default_rng(seed=rng_seed)
-        pipeline.add_random_variable(
+        add_random_variable(
             ds=input_kalman,
             var_name=random_var,
             random_generator=rng,
@@ -274,8 +297,11 @@ with start_run(experiment_id=ExperimentID) as run:
     print(
         f"Run {processing_function.__name__} for : {function_setup['func_kwargs']['nb_iter_SEM']} iterations"
     )
+    # #### Run the ``xarray_Kalman_SEM`` function from the ``pipeline`` library on all experiment setups.
+    #
+    # The ``run_function_on_multiple_subdatasets`` function allows to run the input function on all ``subdatasets`` specified by the ``subdataset_selections``. In this case these selections are given by the ``experiment_settings``.
 
-    experiments_kalman = pipeline.run_function_on_multiple_subdatasets(
+    experiments_kalman = run_function_on_multiple_subdatasets(
         processing_function=processing_function,
         parent_dataset=input_kalman,
         subdataset_selections=experiment_settings,
