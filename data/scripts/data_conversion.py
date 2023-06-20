@@ -5,15 +5,8 @@ model.
 These will be stored under DESTINATION_DIR/climate_indices_``MODEL``.nc
 Function ``cicmod_csv_to_netcdf`` can also be imported.
 This is the main function of the file.
-"""
-"""
-options:
-  -h, --help
-        show this help message and exit
-  --data_url DATA_URL
-        path or URL to the CiCMOD csv file. Default to ../earth_system_models/CiCMOD/climate_indices.csv
-  --destination_dir DESTINATION_DIR
-        path to directory to store all individual xr.Datasets for each model in the CiCMOD csv file. Default to ../earth_system_models/CiCMOD
+
+For options use --help
 """
 
 import argparse
