@@ -65,7 +65,7 @@ print("Done!")
 
 # Verify the Path
 ThisPath = Path(__file__)
-RepoPath = ThisPath.parent.parent
+RepoPath = ThisPath.parent.parent.parent
 print(f"Is this the Repository Path correct?:\n{RepoPath}")
 try:
     assert "yes" == input("Write 'yes' any press Enter!\n")
@@ -269,7 +269,7 @@ with start_run(experiment_id=ExperimentID) as run:
             random_generator=rng,
             variance=random_setup["random_variance"],
         )
-        rng_seed + 1
+        rng_seed += 1
 
     print(
         f"Run {processing_function.__name__} for : {function_setup['func_kwargs']['nb_iter_SEM']} iterations"
