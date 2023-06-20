@@ -154,6 +154,120 @@ def fit_linear_regression_from_loglog(
     )
 
 
+def predict_to_loglog(
+    x: np.ndarray, regression: LinearRegression
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Predict values using a logarithmic scale regression model.
+
+    Parameters:
+        x : np.ndarray
+            The input array of values.
+        regression : LinearRegression
+            The trained linear regression model.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]
+            A tuple containing the transformed x values and the predicted y values.
+
+    Raises:
+        TypeError
+            If the input array has more than 1 dimension.
+
+    Examples:
+        # Example 1: Predict using a linear regression model
+        >>> import numpy as np
+        >>> from sklearn.linear_model import LinearRegression
+        >>> x = np.array([1, 2, 3, 4, 5])
+        >>> regression = LinearRegression()
+        >>> regression.fit(x.reshape(-1, 1), np.log10(x))
+        >>> x_new, y_pred = predict_to_loglog(x, regression)
+        >>> print("Transformed x values:", x_new)
+        >>> print("Predicted y values:", 10**y_pred)
+
+        # Example 2: Predict using a pre-trained regression model
+        >>> x = np.array([1, 2, 3, 4, 5])
+        >>> regression = LinearRegression()
+        >>> regression.coef_ = np.array([0.5])  # Set custom coefficients for demonstration
+        >>> regression.intercept_ = np.array([1.0])  # Set custom intercept for demonstration
+        >>> x_new, y_pred = predict_to_loglog(x, regression)
+        >>> print("Transformed x values:", x_new)
+        >>> print("Predicted y values:", 10**y_pred)
+    """
+    x_transformed = transform_to_loglog(x)
+    y_pred = regression.predict(x_transformed.reshape(-1, 1))
+    return 10**x_transformed, 10**y_pred
+
+
+def linear_regression_loglog(
+    frequencies: np.ndarray,
+    spectrum: np.ndarray,
+    f_low: float = -np.inf,
+    f_high: float = np.inf,
+    weights: Union[str, None, np.ndarray, list] = None,
+) -> Tuple[np.ndarray, np.ndarray, LinearRegression]:
+    """
+    Fit a linear regression model on log-log transformed data and predict using
+    the trained model.
+
+    This function fits a linear regression model on log-log transformed data given the input frequencies and spectrum,
+    and then predicts the transformed values for the same input frequencies using the trained model.
+
+    Parameters:
+        frequencies : np.ndarray
+            The input array of frequencies.
+        spectrum : np.ndarray
+            The input array of spectrum values.
+        f_low : float, optional
+            The lower frequency limit for fitting the linear regression model (default: -inf).
+        f_high : float, optional
+            The upper frequency limit for fitting the linear regression model (default: inf).
+        weights : Union[str, None, np.ndarray, list], optional
+            The weights to be used during model fitting. Supported values are:
+            - None: No weights are applied.
+            - "f_inverse": Weights are set as the inverse of the frequencies.
+            - np.ndarray or list: Custom weights provided as an array or list.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]
+            A tuple containing the transformed frequencies and the predicted log-log transformed spectrum values.
+
+    Examples:
+        # Example 1: Fit linear regression model and make predictions
+        >>> import numpy as np
+        >>> frequencies = np.array([1, 2, 3, 4, 5])
+        >>> spectrum = np.array([10, 20, 30, 40, 50])
+        >>> transformed_frequencies, predicted_spectrum = linear_regression_loglog(frequencies, spectrum)
+        >>> print("Transformed frequencies:", transformed_frequencies)
+        >>> print("Predicted log-log transformed spectrum:", predicted_spectrum)
+
+        # Example 2: Fit linear regression model with custom weights and make predictions
+        >>> frequencies = np.array([1, 2, 3, 4, 5])
+        >>> spectrum = np.array([10, 20, 30, 40, 50])
+        >>> weights = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
+        >>> transformed_frequencies, predicted_spectrum = linear_regression_loglog(frequencies, spectrum, weights=weights)
+        >>> print("Transformed frequencies:", transformed_frequencies)
+        >>> print("Predicted log-log transformed spectrum:", predicted_spectrum)
+    """
+    regression = fit_linear_regression_from_loglog(
+        frequencies=frequencies,
+        spectrum=spectrum,
+        f_low=f_low,
+        f_high=f_high,
+        weights=weights,
+    )
+    frequencies_linear, spectrum_linear = predict_to_loglog(
+        x=frequencies, regression=regression
+    )
+    # frequencies_res = frequencies.copy()
+    f_res = np.zeros_like(frequencies) * np.nan
+    f_res[frequencies != 0] = frequencies_linear
+    spectrum_res = np.zeros_like(spectrum) * np.nan
+    spectrum_res[frequencies != 0] = spectrum_linear.flatten()
+    assert len(f_res) == len(frequencies)
+    return f_res, spectrum_res, regression
+
+
 WelchKwargs = TypedDict(
     "WelchKwargs",
     {
