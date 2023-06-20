@@ -1,3 +1,4 @@
+"""Plots results from AMO parameter experiments."""
 # %%
 import itertools
 
