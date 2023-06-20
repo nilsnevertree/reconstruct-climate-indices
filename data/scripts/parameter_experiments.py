@@ -7,7 +7,7 @@
 # - Settings to create the different Model runs using (``AMO_oscillatory_ocean``).
 # - Settings used by the ``xarray_Kalman_SEM``.
 #
-# Therefor multiple setting for mlflow will need to be set by the User:
+# Therefore multiple setting for mlflow will need to be set by the User:
 # - ExperimentID : Corresponds to the experiment_id used by ``mlflow`` to set the ``set_tracking_uri``.
 # - SubdataPath : Name of the directory in which to store the results. This will be a child of the ``data`` directory.
 # - MlflowPath : Name of the directory in which the mlflow tracking uri shall be used.
@@ -167,10 +167,10 @@ if "modified_arguments" in model_setup:
             )
         except Exception:
             warnings.warn(
-                f"An Exception for {key} occured while using it from ``modified_arguments``.\nThis key will be ignored!"
+                f"An Exception for {key} occurred while using it from ``modified_arguments``.\nThis key will be ignored!"
             )
 else:
-    print("No 'modified_arguments' dictonary was provided in the ``model_setup``.")
+    print("No 'modified_arguments' dictionary was provided in the ``model_setup``.")
 
 # Use given list from model_setup for arguments given in "modified_settings".
 if "modified_settings" in model_setup:
@@ -179,10 +179,10 @@ if "modified_settings" in model_setup:
             experiment_setups[key] = model_setup["modified_settings"][key]
         except Exception:
             warnings.warn(
-                f"An Exception for {key} occured while using it from ``modified_settings``.\nThis key will be ignored!"
+                f"An Exception for {key} occurred while using it from ``modified_settings``.\nThis key will be ignored!"
             )
 else:
-    print("No 'modified_settings' dictonary was provided in the ``model_setup``.")
+    print("No 'modified_settings' dictionary was provided in the ``model_setup``.")
 
 
 # If no change is given : raise error!

@@ -25,7 +25,7 @@ def cicmod_csv_to_netcdf(
     """
     Convert climate indices data from a CSV file to NetCDF format and save to
     the destination directory. It is made for converting the CiCMOD dataset csv
-    results into netCDF. For each model present in the csv file a seperate file
+    results into netCDF. For each model present in the csv file a separate file
     will be created: Example of csv file with two models "FOCI" and "CESM":
     Output will be two files with Paths:
 
@@ -43,7 +43,7 @@ def cicmod_csv_to_netcdf(
     Returns:
         None
 
-    NOTE: Using another coordinate with the name "time" should be suppresed!
+    NOTE: Using another coordinate with the name "time" should be suppressed!
         # add more time coords to the datasets
         time coord it wanted use always day 15, which is roughly the mean of each month
         time = [

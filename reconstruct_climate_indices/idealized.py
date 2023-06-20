@@ -21,7 +21,7 @@
 # Hence adding the stochastic noise This leads to:
 # dSST = - \lambda SST dt -  \omega_0 DOT dt + SAT dW and dDOT = \omega_0 SST dt.
 # => For Realistic AMO-type oscillatory Ocean:
-# Foloowing essentially the same idea than for the oscillatory-ocean but acknowledging large-sacle baroclinic Rossby wave for the oscillatory mechanism.
+# Following essentially the same idea than for the oscillatory-ocean but acknowledging large-sacle baroclinic Rossby wave for the oscillatory mechanism.
 # This leads to:
 # dAMO = - \lambda SST dt -  \omega_0  dt + EAP dW,
 # dZTG = - \lambda ZTG dt -  \omega_0  dt + NAO dW,
@@ -33,7 +33,7 @@
 #
 # CODE
 # ----
-# Import libray
+# Import library
 import random
 
 import matplotlib.pyplot as plt

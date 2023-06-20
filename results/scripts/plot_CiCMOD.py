@@ -165,7 +165,7 @@ kalman_states = pipeline.from_standard_dataset(kalman_results)
 # %% Plot loglikelihood
 fig, ax = plt.subplots(1, 1, figsize=(8, 4))
 ax.plot(kalman_results.kalman_itteration, kalman_results.log_likelihod)
-ax.set_xlabel("kalman itteration")
+ax.set_xlabel("kalman iteration")
 ax.set_ylabel("log likelihood")
 fig.suptitle("CiCMOD | Loglikelihood Kalman SEM")
 save_fig(fig, "CiCMOD_loglikelihood.png", dpi=400)
@@ -217,7 +217,7 @@ save_fig(fig, "CiCMOD_recons_truth.png", dpi=400)
 # fig.suptitle("CiCMOD | Reconstruction against truth")
 # save_fig(fig, "CiCMOD_recons_truth_scatter.png", dpi = 400)
 
-# %% Plot scatter ``latent`` varibale against reconstruction
+# %% Plot scatter ``latent`` variable against reconstruction
 data_vars = data.data_vars
 row_col = ncols_nrows_from_N(len(data_vars))
 
@@ -235,7 +235,7 @@ for idx, var in enumerate(data_vars):
     axs[idx].set_ylabel("variable")
     axs[idx].set_title(var)
 
-fig.suptitle("CiCMOD | Latent variable against climate indeces")
+fig.suptitle("CiCMOD | Latent variable against climate indices")
 save_fig(fig, "CiCMOD_latent_indices_scatter.png", dpi=400)
 
 # %% [markdown]
@@ -248,7 +248,7 @@ data_ccor_list = []
 kalman_ccor_list = []
 for idx, var in tqdm(enumerate(data_vars)):
     for lag in lag_years:
-        # because data is stored in monthly form, we need to multiply the shift by 12 to have teh lag in years
+        # because data is stored in monthly form, we need to multiply the shift by 12 to have the lag in years
         lag_months = lag * 12
         # # No need to calculate covarinace
         # # calculate the covariance
@@ -277,7 +277,7 @@ for idx, var in tqdm(enumerate(data_vars)):
         )
         data_ccor = data_ccor.rename(var)
         data_ccor_list.append(data_ccor)
-        # Also for all varibales try to make cross correaltino with the results from the kalman SEM
+        # Also for all variables try to make cross correaltino with the results from the kalman SEM
         try:
             kalman_ccor = crosscorr(
                 ds1=kalman_states[var],
@@ -304,7 +304,7 @@ kalman_ccor = xr.merge(
     kalman_ccor_list
 )  # lagged cross correlation with all vars avaibales in the kalman results.
 
-# %% STATE VARIABLES | Plot Lagged correlation of latent variable against state varibales
+# %% STATE VARIABLES | Plot Lagged correlation of latent variable against state variables
 data_vars = state_variables
 row_col = ncols_nrows_from_N(len(data_vars))
 
@@ -328,12 +328,12 @@ for idx, var in enumerate(data_vars):
 axs[idx].set_ylim((-1, 1))
 
 fig.suptitle(
-    "CiCMOD | Absolute value of lagged correlation of latent variable against state varibales"
+    "CiCMOD | Absolute value of lagged correlation of latent variable against state variables"
 )
 save_fig(fig, "CiCMOD_latent_states_lagged_corr.png", dpi=400)
 
 
-# %% ALL INDICES | lagged correlation of latent variable against state varibales
+# %% ALL INDICES | lagged correlation of latent variable against state variables
 data_vars = data.data_vars
 row_col = ncols_nrows_from_N(len(data_vars))
 
@@ -359,7 +359,7 @@ axs[idx].set_ylim((-extend, extend))
 fig.suptitle("CiCMOD | Lagged correlation of latent against climate indices.")
 save_fig(fig, "CiCMOD_latent_indices_lagged_corr.png", dpi=400)
 
-# %% ALL INDICES | Absolute value of lagged correlation of latent variable against state varibales
+# %% ALL INDICES | Absolute value of lagged correlation of latent variable against state variables
 data_vars = data.data_vars
 row_col = ncols_nrows_from_N(len(data_vars))
 
@@ -388,7 +388,7 @@ save_fig(fig, "CiCMOD_latent_indices_lagged_corr_abs.png", dpi=400)
 
 
 # %% [markdown]
-# ### Perform frequency analyis on input and ouptut data
+# ### Perform frequency analysis on input and output data
 
 # %% Frequency analysis of all state variables.
 data_vars = state_variables
@@ -426,5 +426,5 @@ for idx, var in enumerate(data_vars):
     ax.legend()
 
 ax.set_ylim(bottom=10 ** (-5.5), top=10 ** (0.5))
-fig.suptitle("CiCMOD | Frequency spectrum state varibales")
+fig.suptitle("CiCMOD | Frequency spectrum state variables")
 save_fig(fig, "CiCMOD_fft_states.png", dpi=400)

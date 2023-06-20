@@ -181,7 +181,7 @@ for i, mod1 in tqdm(enumerate(experiments[mod_arg_1])):
         reconst = experiments_kalman.sel(select_dict, method="nearest")
         axs[i, j].plot(reconst["kalman_itteration"], reconst["log_likelihod"])
         axs[i, j].set_ylabel("log_likelihod")
-        axs[i, j].set_xlabel("kalman itteration")
+        axs[i, j].set_xlabel("kalman iteration")
 
 fig.suptitle(f"Log Likelihood | ObservaVariation of {mod_arg_1} and {mod_arg_2}")
 

@@ -27,7 +27,7 @@ represents the NAO (North Atlantic Oscillation)
 #
 # CODE
 # ----
-# Import libray
+# Import library
 """
 import os
 
@@ -473,7 +473,7 @@ def integrate_all(
     seed=331381460666,
 ):
     """
-    Integartes.
+    Integrates.
 
     - Sponge ocean
     - Oscillatory Ocean

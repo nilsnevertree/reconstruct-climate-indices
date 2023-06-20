@@ -8,7 +8,7 @@ setup(
         "tag_regex": r"^(?P<prefix>v)?(?P<version>[^\+]+)(?P<suffix>.*)?$",
         "local_scheme": "node-and-date",
     },
-    description="Reconstruction of hidden components in the Climate System using Climate Indicies.",
+    description="Reconstruction of hidden components in the Climate System using Climate Indices.",
     author="Nils Niebaum",
     license="",
 )
