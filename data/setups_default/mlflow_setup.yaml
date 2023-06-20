@@ -2,7 +2,7 @@
 ## SETTINGS FOR MLFLOW TRACKING
 ## ==================
 mlflow_setup:
-  # this sets the experiment ID into which the experimetn shall be logged
+  # this sets the experiment ID into which the experiment shall be logged
   experiment_id : 750584923317940775
   # this sets the sub path of ./data/ into which the results shall be passed
   subdata_path : "Evaluation-Idealized-Ocean"

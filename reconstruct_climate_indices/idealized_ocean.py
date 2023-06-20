@@ -1,9 +1,10 @@
-# idealized.ipynb
-# DESCRIPTION
-# -----------
-# The idea is to compute two models of the ocean surface response (SST) to an atmospheric stochastic forcing (SAT)
-# The surface ocean response represents the AMO/AMV (Atlantic Multidecadal Oscillation/Variability)
-# The atmsopheric stochastic forcing represents the NAO (North Atlantic Oscillation)
+"""
+# idealized.ipynb # DESCRIPTION # ----------- # The idea is to compute two
+models of the ocean surface response (SST) to an atmospheric stochastic forcing
+(SAT) # The surface ocean response represents the AMO/AMV (Atlantic
+Multidecadal Oscillation/Variability) # The atmsopheric stochastic forcing
+represents the NAO (North Atlantic Oscillation)
+
 # The first model - Spunge Ocean (_spg) - follows is a simple spunge ocean - where SST is restored to 0
 # The second model - Oscillatry Ocean (_ocs) - follows a simple damped ocsillator - where ocean oscillate between SST and DOT (Deep Ocean Temperature)
 # Both ocean models are stimulated by random white noise from SAT - where only the SST is affected.
@@ -26,8 +27,8 @@
 #
 # CODE
 # ----
-# Import libray
-
+# Import library
+"""
 import os
 
 from typing import Dict, Tuple, TypeVar, Union
@@ -46,7 +47,7 @@ ModelOutput = TypeVar("ModelOutput", xr.Dataset, Tuple[xr.Dataset, Dict])
 
 
 def __timesteps_as_int__(timesteps):
-    # make sure the timesteps are of int type:
+    """Make sure the timesteps are of int type."""
     if not isinstance(timesteps, int):
         timesteps = int(timesteps)
         warn(
@@ -425,6 +426,11 @@ def integrate_idealized_ocean(
     save_path=None,
     seed=331381460666,
 ):
+    """
+    Integrate sponge and oscillatory ocean.
+
+    See their documentation
+    """
     # Verify that timesteps are of int type:
     time_steps = __timesteps_as_int__(time_steps)
 
@@ -466,6 +472,14 @@ def integrate_all(
     return_settings=False,
     seed=331381460666,
 ):
+    """
+    Integrates.
+
+    - Sponge ocean
+    - Oscillatory Ocean
+    - AMO Oscillatory Ocean
+    More details, see their docstrings.
+    """
     # Verify that timesteps are of int type:
     time_steps = __timesteps_as_int__(time_steps)
 

@@ -20,14 +20,14 @@ Project Organization
     ├───temporary
     └───tests
 
-### Usage of Kalman Algorthims
+### Usage of Kalman Algorithms
 For this you need to install the [kalman-reconstruction](https://github.com/nilsnevertree/kalman-reconstruction-partially-observered-systems) library.
 For no use ``git clone`` and ``pip install -e .`` because the repository is still private.
 
 ### Pre-commit
 In order to use linting, pre-commit is used in this repository.
 To lint your code, install [pre-commit](https://pre-commit.com/) and run ``pre-commit run --all-files`` before each commit.
-This takes care of formating all files using the configuration from [.pre-commit-config.yaml](.pre-commit-config.yaml).
+This takes care of formatting all files using the configuration from [.pre-commit-config.yaml](.pre-commit-config.yaml).
 
 Please note that the https://github.com/kynan/nbstripout is used to make sure that the output from notebooks is cleared.
 To disable it, comment out the part in [.pre-commit-config.yaml](.pre-commit-config.yaml?plain=1#L65)

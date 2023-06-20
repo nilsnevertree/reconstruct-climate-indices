@@ -242,7 +242,7 @@ texinfo_documents = [
         "reconstruct-climate-indices Documentation",
         "IMT-Atlantique-MEE",
         "reconstruct-climate-indices",
-        "Reconstruction of hidden components in the Climate System using Climate Indicies.",
+        "Reconstruction of hidden components in the Climate System using Climate Indices.",
         "Miscellaneous",
     ),
 ]

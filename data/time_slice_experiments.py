@@ -1,35 +1,36 @@
 # %% [markdown]
-# # Track parameter Experiments
-#
-# ### Track the experiment using ``mlflow``
-# Using mlflow, the following information will be stored:
-# - Dataset containing the results from the ``AMO_oscillatory_ocean`` for all experiment settings.
-# - Dataset containing the results from the ``xarray_Kalman_SEM`` for all experiment settings.
-# - Settings to create the different Model runs using (``AMO_oscillatory_ocean``).
-# - Settings used by the ``xarray_Kalman_SEM``.
-#
-# Therefor multiple setting for mlflow will need to be set by the User:
-# - ExperimentID : Corresponds to the experiment_id used by ``mlflow`` to set the ``set_tracking_uri``.
-# - SubdataPath : Name of the directory in which to store the results. This will be a child of the ``data`` directory.
-# - MlflowPath : Name of the directory in which the mlflow tracking uri shall be used.
-# - NOTE:
-#     - Make sure that the RepoPath is correct!
-#     - Make sure that ExperimentID exists!
+"""
+# Track parameter Experiments
 
-# The folder structure will be :
-#
-# **Folder structure**
-#
-#     └───RepoPath
-#         └───data
-#             └───SubdataPath
-#                 └───run_id
-#                     │    run_id_input.nc
-#                     │    run_id_kalman.nc
-#                     │    run_id_kalman_settings.yml
-#                     │    run_id_parameter_settings.yml
-# Where ``run_id`` is e.g. *553cbd3bc6ce44028c8daad12647c306*
-#
+### Track the experiment using ``mlflow``
+Using mlflow, the following information will be stored:
+- Dataset containing the results from the ``AMO_oscillatory_ocean`` for all experiment settings.
+- Dataset containing the results from the ``xarray_Kalman_SEM`` for all experiment settings.
+- Settings to create the different Model runs using (``AMO_oscillatory_ocean``).
+- Settings used by the ``xarray_Kalman_SEM``.
+
+Therefore multiple setting for mlflow will need to be set by the User:
+- ExperimentID : Corresponds to the experiment_id used by ``mlflow`` to set the ``set_tracking_uri``.
+- SubdataPath : Name of the directory in which to store the results. This will be a child of the ``data`` directory.
+- MlflowPath : Name of the directory in which the mlflow tracking uri shall be used.
+- NOTE:
+    - Make sure that the RepoPath is correct!
+    - Make sure that ExperimentID exists!
+
+The folder structure will be :
+
+**Folder structure**
+
+    └───RepoPath
+        └───data
+            └───SubdataPath
+                └───run_id
+                    │    run_id_input.nc
+                    │    run_id_kalman.nc
+                    │    run_id_kalman_settings.yml
+                    │    run_id_parameter_settings.yml
+Where ``run_id`` is e.g. *553cbd3bc6ce44028c8daad12647c306*
+"""
 
 # %%
 print("Start imports.")
@@ -69,14 +70,14 @@ def product_dict(**kwargs):
 seed = 39266
 # Varaince of the randomly initialized latent variable
 random_variance = 1
-# itterations of the kalman SEM
+# iterations of the kalman SEM
 nb_iter_SEM = 30
 # observation variables
 observation_variables = ["AMO", "NAO", "EAP"]
 # state variables
 state_variables = ["AMO", "NAO", "EAP", "latent"]
 
-# create the dictonary that shall be used ot store the kalman_settings in the mlflow tracking
+# create the dictionary that shall be used to store the kalman_settings in the mlflow tracking
 kalman_settings = dict(
     RandomNumberGeneratorSeed=seed,
     RandomVariance=random_variance,
@@ -93,7 +94,7 @@ func_kwargs = dict(
     nb_iter_SEM=nb_iter_SEM,
 )
 
-# Random number generators used to create the latent varibale.
+# Random number generators used to create the latent variable.
 rng1 = np.random.default_rng(seed=seed)
 # rng2 = np.random.default_rng(seed=seed + 1)
 # rng3 = np.random.default_rng(seed=seed + 2)

@@ -13,7 +13,7 @@ model_setup :
     # The model function used for all experiments
     model_function : "idealized_ocean.AMO_oscillatory_ocean"
     # 1. step
-    # dictonary containing the default settings that shall later be modified.
+    # dictionary containing the default settings that shall later be modified.
     default_settings : {
             nt: 3000,  # timesteps in 50 * 12
             dt: 30,  # days
@@ -24,14 +24,14 @@ model_setup :
             cNAOvsEAP: 0,
             seed: 331381460666,
         }
-    ### The parameter_experiment.py file will create all combinations of parameters provided with the following settings in the model_setup dictonary.
+    ### The parameter_experiment.py file will create all combinations of parameters provided with the following settings in the model_setup dictionary.
     # 2. step
     # The values of the modified arguments will be multiplicated by the factors provided below.
     modified_arguments : ["dNAO", "dEAP"]
     factors :  [0.5, 1, 2]
     numpy_round_factor : 6 # factor will be used as rounding for all changes settings using the factor list.
     # 3. step
-    # The values in default settings and given by the modified arguemtns (step 2) will be OVERRIDEN by the lists provided in this dictonary.
+    # The values in default settings and given by the modified arguments (step 2) will be OVERRIDDEN by the lists provided in this dictionary.
     modified_settings : {
         seed : [
             331381460666, # Default value of the idealized_ocean functions.
@@ -50,7 +50,7 @@ model_setup :
 ## SETTINGS FOR KALMAN SEM
 kalman_setup :
     processing_function : "pipeline.xarray_Kalman_SEM"
-    # itterations of the kalman SEM
+    # iterations of the kalman SEM
     nb_iter_SEM : &nb_iter_SEM 30
     # observation variables
     observation_variables : &observation_variables
@@ -64,10 +64,10 @@ kalman_setup :
         - "EAP"
         - "latent"
 
-## RANDOM SETTING USED FOR THE RANDOM VARIBALE
+## RANDOM SETTING USED FOR THE RANDOM VARIABLE
 random_setup :
     # seed for the randomnumber generator
-    # Random number generators used to create the latent varibale will take the seed
+    # Random number generators used to create the latent variable will take the seed
     seed : &seed 39266
     # Varaince of the randomly initialized latent variable
     random_variance : &random_variance  1
