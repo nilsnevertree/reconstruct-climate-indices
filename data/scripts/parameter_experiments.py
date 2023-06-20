@@ -156,12 +156,21 @@ def product_dict(**kwargs):
 experiment_setups = dict()
 
 # Use factor multiplication for all arguments given in "modified_arguments"
-for key in model_setup["modified_arguments"]:
-    # make sure to not go into too much details
-    experiment_setups[key] = np.round(
-        a=model_setup["default_settings"][key] * np.array(model_setup["factors"]),
-        decimals=model_setup["numpy_round_factor"],
-    )
+if "modified_arguments" in model_setup:
+    for key in model_setup["modified_arguments"]:
+        try:
+            # make sure to not go into too much details
+            experiment_setups[key] = np.round(
+                a=model_setup["default_settings"][key]
+                * np.array(model_setup["factors"]),
+                decimals=model_setup["numpy_round_factor"],
+            )
+        except Exception:
+            warnings.warn(
+                f"An Exception for {key} occured while using it from ``modified_arguments``.\nThis key will be ignored!"
+            )
+else:
+    print("No 'modified_arguments' dictonary was provided in the ``model_setup``.")
 
 # Use given list from model_setup for arguments given in "modified_settings".
 if "modified_settings" in model_setup:
@@ -170,11 +179,17 @@ if "modified_settings" in model_setup:
             experiment_setups[key] = model_setup["modified_settings"][key]
         except Exception:
             warnings.warn(
-                f"An Exception for {key} occured in using it from ``modified_settings``.\nThis key will be ignored!"
+                f"An Exception for {key} occured while using it from ``modified_settings``.\nThis key will be ignored!"
             )
 else:
-    print("No 'modified_settings' dictonary was provided in the settings file.")
+    print("No 'modified_settings' dictonary was provided in the ``model_setup``.")
 
+
+# If no change is given : raise error!
+if not bool(experiment_setups):  # if dictornary is empty
+    raise NotImplementedError(
+        f"The experiment_setups seem to be empty.\nThis may be a results of not providing either of:\n- 'modified_arguments' with 'factors'\n- 'modified_settings'"
+    )
 
 print(f"Are those the experiment_setups you want to perform?:\n{experiment_setups}")
 try:
