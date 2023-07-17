@@ -1,20 +1,44 @@
 # Use the following code to create the entries from the first element onwards.
 # Default value of the idealized_ocean functions.
+# >>> import numpy as np
+# >>> amount = 30
 # >>> seed = 331381460666
-# >>> np.random.default_rng(seed=seed).integers(0, 1e12, 10)
-# array([281919096187, 841890021701, 573526330895, 729014145638,
-#        831545864661, 379772175813,  68282207887, 326575964518,
-#        486318926357, 522368279966], dtype=int64)
+# >>> random_seed_list = np.zeros(30, dtype=np.int64)
+# >>> random_seed_list[0] = seed
+# >>> random_seed_list[1:] = np.random.default_rng(seed=seed).integers(0, 1e12, amount-1)
+# >>> for s in range(amount):
+# >>>     print(f"- {random_seed_list[s]}\t#{s}")
+# ...
 
 random_seeds_list :
-- 331381460666 # Default value of the idealized_ocean functions.
-- 281919096187
-- 841890021701
-- 573526330895
-- 729014145638
-- 831545864661
-- 379772175813
-- 68282207887
-- 326575964518
-- 486318926357
-- 522368279966
+#0 is the default value of the idealized_ocean functions.
+- 331381460666  #0
+- 281919096187  #1
+- 841890021701  #2
+- 573526330895  #3
+- 729014145638  #4
+- 831545864661  #5
+- 379772175813  #6
+- 68282207887   #7
+- 326575964518  #8
+- 486318926357  #9
+- 522368279966  #10
+- 788475142034  #11
+- 996597334401  #12
+- 976420568694  #13
+- 867783224271  #14
+- 539773039408  #15
+- 732557429235  #16
+- 599934914220  #17
+- 124189119918  #18
+- 351632410513  #19
+- 554770804129  #20
+- 738157617011  #21
+- 686330835353  #22
+- 936471049183  #23
+- 475010951226  #24
+- 975732410361  #25
+- 291843746248  #26
+- 646073866162  #27
+- 510387082597  #28
+- 26437479881   #29

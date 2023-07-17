@@ -80,6 +80,7 @@ def fit_linear_regression_from_loglog(
         weights (Union[str, None, np.ndarray, list]): Optional weights for the linear regression.
             - If 'f_inverse', the weights are set as the inverse of frequencies.
             - If None, "", "ones", "ONES", or "1", the weights are set as an array of ones.
+            - If 'power_log', the weights are set as the log10 of the spectrum itself.
             - If an np.ndarray or a list, the weights are set as the provided array or list.
             (default: None)
 
@@ -136,6 +137,8 @@ def fit_linear_regression_from_loglog(
     # Set weights based on the provided option
     if weights == "f_inverse":
         weights = (frequencies_filtered) ** (-1)
+    elif weights == "power_log":
+        weights = spectrum_log
     elif weights in [None, "", "ones", "ONES", "1"]:
         weights = np.ones_like(frequencies_filtered)
     elif isinstance(weights, (np.ndarray, list)):
@@ -159,6 +162,7 @@ def predict_to_loglog(
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Predict values using a logarithmic scale regression model.
+    Returned values are in the same scalling as ``x``.
 
     Parameters:
         x : np.ndarray
@@ -226,6 +230,7 @@ def linear_regression_loglog(
             The weights to be used during model fitting. Supported values are:
             - None: No weights are applied.
             - "f_inverse": Weights are set as the inverse of the frequencies.
+            - If 'power_log', the weights are set as the log10 of the spectrum itself.
             - np.ndarray or list: Custom weights provided as an array or list.
 
     Returns:
@@ -427,6 +432,11 @@ def xarray_dataarray_welch(
     Example:
         # Perform Welch's method on a temperature DataArray along the "time" dimension
         result = xarray_array_welch(da=temperature, dim="time", new_dim="frequency", welch_kwargs={'fs': 2})
+
+    Note:
+        See also docstring of welch for the kwargs that can be supplied
+        https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.welch.html
+        ./reconstruct_climate_indices/note-scipy-signal-welch.md
     """
     da = da.transpose(dim, ...)
     dims = da.dims
@@ -467,6 +477,11 @@ def xarray_dataset_welch(
     Example:
         # Perform Welch's method on a dataset along the "time" dimension
         result = xarray_dataset_welch(ds=dataset, dim="time", new_dim="frequency", welch_kwargs={'fs': 2})
+
+    Note:
+        See also docstring of welch for the kwargs that can be supplied
+        https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.welch.html
+        ./reconstruct_climate_indices/note-scipy-signal-welch.md
     """
     dims = ds.dims
     coords_keys = [val for val in dims if dim not in val]
