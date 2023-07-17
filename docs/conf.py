@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# reconstruct-climate-indices documentation build configuration file, created by
+# kalman-reconstruction-partially-observered-systems documentation build configuration file, created by
 # sphinx-quickstart.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -18,7 +18,7 @@ import sys
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-# sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath(".."))
 
 # -- General configuration -----------------------------------------------------
 
@@ -27,7 +27,17 @@ import sys
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = []
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.coverage",
+    "sphinx.ext.napoleon",
+    "sphinx_automodapi.automodapi",
+    "sphinx.ext.mathjax",
+]
+
+# Turn on sphinx.ext.autosummary
+autosummary_generate = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -42,7 +52,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "reconstruct-climate-indicies"
+project = "kalman-reconstruction-partially-observered-systems"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -92,7 +102,7 @@ pygments_style = "sphinx"
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "default"
+html_theme = "sphinx_rtd_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -132,7 +142,9 @@ html_static_path = ["_static"]
 # html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-# html_sidebars = {}
+html_sidebars = html_sidebars = {
+    "**": ["globaltoc.html", "relations.html", "sourcelink.html", "searchbox.html"]
+}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -165,7 +177,7 @@ html_static_path = ["_static"]
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "reconstruct-climate-indices"
+htmlhelp_basename = "kalman-reconstruction-partially-observered-systemsdoc"
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -184,9 +196,9 @@ latex_elements = {
 latex_documents = [
     (
         "index",
-        "reconstruct-climate-indices.tex",
-        "reconstruct-climate-indices Documentation",
-        "Nils Niebaum",
+        "kalman-reconstruction-partially-observered-systems.tex",
+        "kalman-reconstruction-partially-observered-systems Documentation",
+        "IMT-Atlantique-MEE",
         "manual",
     ),
 ]
@@ -219,9 +231,9 @@ latex_documents = [
 man_pages = [
     (
         "index",
-        "reconstruct-climate-indices",
-        "reconstruct-climate-indices Documentation",
-        ["Nils Niebaum"],
+        "kalman-reconstruction-partially-observered-systems",
+        "kalman-reconstruction-partially-observered-systems Documentation",
+        ["IMT-Atlantique-MEE"],
         1,
     )
 ]
@@ -238,11 +250,11 @@ man_pages = [
 texinfo_documents = [
     (
         "index",
-        "reconstruct-climate-indices",
-        "reconstruct-climate-indices Documentation",
+        "kalman-reconstruction-partially-observered-systems",
+        "kalman-reconstruction-partially-observered-systems Documentation",
         "IMT-Atlantique-MEE",
-        "reconstruct-climate-indices",
-        "Reconstruction of hidden components in the Climate System using Climate Indices.",
+        "kalman-reconstruction-partially-observered-systems",
+        "Data-driven Reconstruction of Partially Observed Dynamical Systems using Kalman algorithms and an iterative procedure.",
         "Miscellaneous",
     ),
 ]
