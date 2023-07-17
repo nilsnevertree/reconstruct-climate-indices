@@ -44,7 +44,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--mlflow_path",
-    default=Path("data") / Path("setups_default") / "mlflow_setup_nofactor.yaml",
+    default=Path("data") / Path("setups_default") / "mlflow_setup.yaml",
     help="path relative to REPO_PATH to the mlflow setup stored in a .yaml file",
 )
 
@@ -128,16 +128,39 @@ try:
         )
 except Exception as e:
     raise e
+
 #  IMPORT THE KALMAN FUNCTION
 try:
+    # NOTE: this needs to be updated manually available processing functions
+    available_processing_functions = [
+        "pipeline.xarray_Kalman_SEM",
+        "pipeline.xarray_Kalman_SEM_time_dependent",
+        "pipeline.xarray_Kalman_SEM_full_output",
+    ]
+
     processing_function = kalman_setup["processing_function"]
-    if "xarray_Kalman_SEM" in processing_function:
+    # Import the processing function
+    if processing_function in ["pipeline.xarray_Kalman_SEM", "xarray_Kalman_SEM"]:
         from kalman_reconstruction.pipeline import (
             xarray_Kalman_SEM as processing_function,
         )
+    elif processing_function in [
+        "pipeline.xarray_Kalman_SEM_time_dependent",
+        "xarray_Kalman_SEM_time_dependent",
+    ]:
+        from kalman_reconstruction.pipeline import (
+            xarray_Kalman_SEM_time_dependent as processing_function,
+        )
+    elif processing_function in [
+        "pipeline.xarray_Kalman_SEM_full_output",
+        "xarray_Kalman_SEM_full_output",
+    ]:
+        from kalman_reconstruction.pipeline import (
+            xarray_Kalman_SEM_full_output as processing_function,
+        )
     else:
         raise ValueError(
-            f"The provided model function {processing_function} is not available"
+            f"The provided model function {processing_function} is not an available function of\n{available_processing_functions}"
         )
 except Exception as e:
     raise e
@@ -157,30 +180,40 @@ experiment_setups = dict()
 
 # Use factor multiplication for all arguments given in "modified_arguments"
 if "modified_arguments" in model_setup:
-    for key in model_setup["modified_arguments"]:
-        try:
-            # make sure to not go into too much details
-            experiment_setups[key] = np.round(
-                a=model_setup["default_settings"][key]
-                * np.array(model_setup["factors"]),
-                decimals=model_setup["numpy_round_factor"],
-            )
-        except Exception:
-            warnings.warn(
-                f"An Exception for {key} occurred while using it from ``modified_arguments``.\nThis key will be ignored!"
-            )
+    if isinstance(model_setup["modified_arguments"], list):
+        for key in model_setup["modified_arguments"]:
+            try:
+                # make sure to not go into too much details
+                experiment_setups[key] = np.round(
+                    a=model_setup["default_settings"][key]
+                    * np.array(model_setup["factors"]),
+                    decimals=model_setup["numpy_round_factor"],
+                )
+            except Exception:
+                warnings.warn(
+                    f"An Exception for {key} occurred while using it from ``modified_arguments``.\nThis key will be ignored!"
+                )
+    else:
+        warnings.warn(
+            f"Type of 'modified_arguments' in 'model_setup' needs to be 'list' but is {type(model_setup['modified_arguments'])}"
+        )
 else:
     print("No 'modified_arguments' dictionary was provided in the ``model_setup``.")
 
 # Use given list from model_setup for arguments given in "modified_settings".
 if "modified_settings" in model_setup:
-    for key in model_setup["modified_settings"]:
-        try:
-            experiment_setups[key] = model_setup["modified_settings"][key]
-        except Exception:
-            warnings.warn(
-                f"An Exception for {key} occurred while using it from ``modified_settings``.\nThis key will be ignored!"
-            )
+    if isinstance(model_setup["modified_settings"], dict):
+        for key in model_setup["modified_settings"]:
+            try:
+                experiment_setups[key] = model_setup["modified_settings"][key]
+            except Exception:
+                warnings.warn(
+                    f"An Exception for {key} occurred while using it from ``modified_settings``.\nThis key will be ignored!"
+                )
+    else:
+        warnings.warn(
+            f"Type of 'modified_settings' in 'model_setup' needs to be 'dict' but is {type(model_setup['modified_settings'])}"
+        )
 else:
     print("No 'modified_settings' dictionary was provided in the ``model_setup``.")
 
@@ -217,6 +250,12 @@ with start_run(experiment_id=ExperimentID) as run:
     # retrieve the run_name
     run_name = run.info.run_name
     run_id = run.info.run_id
+
+    # print information about the run
+    print("Information:")
+    print(f"ExperimentID : {ExperimentID}")
+    print(f"RunName : {run_name}")
+    print(f"RunID : {run_id}")
 
     # update run_name and run_name into the mlflow_setups
     mlflow_setup["run_name"] = run_name
@@ -332,4 +371,5 @@ with start_run(experiment_id=ExperimentID) as run:
 end_run()
 print("------------\nTracking Done!------------\n")
 print(f"ExperimentID : {ExperimentID}")
-print(f"RunID : {run_name}")
+print(f"RunName : {run_name}")
+print(f"RunID : {run_id}")
