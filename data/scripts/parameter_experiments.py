@@ -114,9 +114,9 @@ try:
         from reconstruct_climate_indices.idealized_ocean import (
             AMO_oscillatory_ocean as model_function,
         )
-    elif "spunge_ocean" in model_function:
+    elif "sponge_ocean" in model_function:
         from reconstruct_climate_indices.idealized_ocean import (
-            spunge_ocean as model_function,
+            sponge_ocean as model_function,
         )
     elif "oscillatory_ocean" in model_function:
         from reconstruct_climate_indices.idealized_ocean import (

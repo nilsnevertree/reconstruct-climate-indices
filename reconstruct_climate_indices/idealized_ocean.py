@@ -5,13 +5,13 @@ models of the ocean surface response (SST) to an atmospheric stochastic forcing
 Multidecadal Oscillation/Variability) # The atmsopheric stochastic forcing
 represents the NAO (North Atlantic Oscillation)
 
-# The first model - Spunge Ocean (_spg) - follows is a simple spunge ocean - where SST is restored to 0
+# The first model - sponge Ocean (_spg) - follows is a simple sponge ocean - where SST is restored to 0
 # The second model - Oscillatry Ocean (_ocs) - follows a simple damped ocsillator - where ocean oscillate between SST and DOT (Deep Ocean Temperature)
 # Both ocean models are stimulated by random white noise from SAT - where only the SST is affected.
 #
 # EQUATIONS
 # ---------
-# => For the Spunge Ocean:
+# => For the sponge Ocean:
 # dSST = - \lambda SST dt + SAT dW,
 # where \lambda is the inverse of a damping time scale
 # => For the Oscillatory Ocean:
@@ -55,7 +55,7 @@ def __timesteps_as_int__(timesteps):
     return timesteps
 
 
-def spunge_ocean(
+def sponge_ocean(
     nt: Union[int, float] = 1000,
     dt: float = 365.25,
     df: float = 1.15e-1,
@@ -433,7 +433,7 @@ def integrate_idealized_ocean(
     # Verify that timesteps are of int type:
     time_steps = __timesteps_as_int__(time_steps)
 
-    spunge = spunge_ocean(
+    sponge = sponge_ocean(
         nt=time_steps,
         dt=dt,
         df=stochastic_forcing_intensity,
@@ -450,7 +450,7 @@ def integrate_idealized_ocean(
         seed=seed,
         save_path=None,
     )
-    ds = xr.merge([spunge, oscillator])
+    ds = xr.merge([sponge, oscillator])
 
     if save_path is not None:
         ds.to_netcdf(save_path, mode="w")
@@ -482,7 +482,7 @@ def integrate_all(
     # Verify that timesteps are of int type:
     time_steps = __timesteps_as_int__(time_steps)
 
-    spunge = spunge_ocean(
+    sponge = sponge_ocean(
         nt=time_steps,
         dt=dt,
         df=stochastic_forcing_intensity,
@@ -510,7 +510,7 @@ def integrate_all(
         seed=seed,
         save_path=None,
     )
-    ds = xr.merge([spunge, oscillator, rossby])
+    ds = xr.merge([sponge, oscillator, rossby])
 
     if save_path is not None:
         ds.to_netcdf(save_path, mode="w")
