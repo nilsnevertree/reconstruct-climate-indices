@@ -34,7 +34,6 @@ import os
 from typing import Dict, Tuple, TypeVar, Union
 from warnings import warn
 
-import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 

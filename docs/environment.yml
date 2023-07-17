@@ -1,4 +1,4 @@
-name: reconstruct_climate_indices_docs
+name: kalman_reconstruction_docs
 dependencies:
    - python=3.10
    # If your docs code examples depend on other packages add them here
@@ -20,4 +20,5 @@ dependencies:
      - jupyter_client
      - sphinx_pangeo_theme
      - sphinx-copybutton
+     - pydata-sphinx-theme
      - sphinxcontrib-srclinks
