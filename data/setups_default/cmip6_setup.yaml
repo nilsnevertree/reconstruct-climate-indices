@@ -1,0 +1,69 @@
+## SETTINGS FOR MODEL FUNCTION
+# with this settings file, the reconstruct-climate-indices/data/scripts/parameter_experiments.py file can be run.
+# It uses the kalman_reconstruction.pipeline.run_function_on_multiple_subdatasets function to call the:
+# kalman_setup :
+#    processing_function : ...
+# with the given positional and keyword arguments provided in
+# function_setup : ...
+#
+# NOTE: Make sure that the model_setup is chosen correct for the model_function you use.
+# Example setup
+# AMO_oscillatory_ocean
+model_setup :
+    # The model function used for all experiments
+    parent_directory : "earth_system_models/CMIP6"
+    model_name : "MIROC6"
+    # Dimension name along which the processing function shall be applied
+    dimension : "member"
+    indices :
+      AMO :
+        file_name : "AMO_anomalies_MIROC.nc"
+        original_var_name : "tos"
+        new_var_name : &state_1 "atlatic-multidecadel-oscillation"
+      NAO :
+        file_name : "NAO_ensemble_norm_MIROC.nc"
+        original_var_name : "psl"
+        new_var_name : &state_2 "north-atlantic-oscillation-station-based"
+
+
+## RANDOM SETTING USED FOR THE RANDOM VARIABLE
+random_setup :
+    # seed for the randomnumber generator
+    # Random number generators used to create the latent variable will take the seed
+    seed : &seed 39266
+    # Varaince of the randomly initialized latent variable
+    random_variance : &random_variance  1
+    number_random_variables : 3
+    name_random_variables :
+        - &random_1 "latent1"
+        # - &random_2 "latent2"
+        # - &random_3 "latent3"
+
+## SETTINGS FOR KALMAN SEM
+kalman_setup :
+    processing_function : "pipeline.xarray_Kalman_SEM"
+    # iterations of the kalman SEM
+    nb_iter_SEM : &nb_iter_SEM 50
+    # observation variables
+    observation_variables : &observation_variables
+        - *state_1
+        - *state_2
+    # state variables
+    state_variables : &state_variables
+        - *state_1
+        - *state_2
+        - *random_1
+        # - *random_2
+        # - *random_3
+
+# arguments used for the processing function which is called using the apply to multiple_sub_datasets
+function_setup :
+    # positional args for the kalman_SEM algorithm
+    func_args :  {}
+    # key word args for the kalman_SEM algorithm
+    func_kwargs :  {
+        observation_variables: *observation_variables,
+        state_variables: *state_variables,
+        nb_iter_SEM: *nb_iter_SEM,
+        variance_obs_comp: 0.0001
+        }
