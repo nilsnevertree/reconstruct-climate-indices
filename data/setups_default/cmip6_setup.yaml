@@ -1,29 +1,55 @@
-## SETTINGS FOR MODEL FUNCTION
-# with this settings file, the reconstruct-climate-indices/data/scripts/parameter_experiments.py file can be run.
-# It uses the kalman_reconstruction.pipeline.run_function_on_multiple_subdatasets function to call the:
-# kalman_setup :
-#    processing_function : ...
-# with the given positional and keyword arguments provided in
-# function_setup : ...
-#
-# NOTE: Make sure that the model_setup is chosen correct for the model_function you use.
-# Example setup
-# AMO_oscillatory_ocean
+# This file contains the setup for the CMIP6 models
+# It is the setup file shich can be used to run the kalman SEM for the CMIP6 models
+# The corresponding python file is ``/data/scripts/cmip6_experiments.py``
+# It will be loaded by the script and the setup will be stored in the MLFlow experiment under ``/mlruns/``-
+# The setup is used for the CMIP6 models, but can be used for other models as well.
+# PARAMETERS:
+# - The ``model_setup`` is used to load the data and rename the variables.
+#       The ``model_setup`` is a dictionary with the following keys:
+#           - model_name: Name of the model
+#           - parent_directory: Subdirectory of /data/ where the input files are stored
+#           - dimension: Dimension name along which the processing function shall be applied (e.g. "member")
+#           - indices: Dictionary with the indices that shall be loaded and renamed
+#               - file_name: Name of the file
+#               - original_var_name: Name of the variable in the file
+#               - new_var_name: New name of the variable
+# - The ``random_setup`` is used to create the random variable.
+#       The ``random_setup`` is a dictionary with the following keys:
+#           - seed: Seed for the randomnumber generator
+#           - random_variance: Varaince of the randomly initialized latent variable
+#           - name_random_variables: List of the names of the latent variables.
+# - The ``kalman_setup`` is used to run the kalman SEM.
+#       The ``kalman_setup`` is a dictionary with the following keys:
+#           - processing_function: Processing function can be e.g. pipeline.xarray_Kalman_SEM or pipeline.xarray_Kalman_SEM_full_output
+#           - nb_iter_SEM: Iterations of the kalman SEM
+#           - observation_variables: Observation variables (use nodes here for the names of the indices)
+#           - state_variables: State variables (use nodes here for the names of the indices and the random variables)
+#           - variance_obs_comp: Variance of the observed components (observation uncertainty)
+# - The ``function_setup`` is used for the processing function which is called using the apply to multiple_sub_datasets
+#       The ``function_setup`` is a dictionary with the following keys:
+#           - func_args: Positional args for the kalman_SEM algorithm
+#           - func_kwargs: Key word args for the kalman_SEM algorithm
+# - The ``func_kwargs`` are the same as the ``kalman_setup``.
+#       The ``func_kwargs`` are used to pass the arguments to the processing function.
+
+# NOTE: Make sure that the model_setup is chosen correct for the model_name you use.
 model_setup :
-    # The model function used for all experiments
+    # The name of the model / The input files should be stored in a directory with the same name
+    model_name : "ACCESS"
+    # The subdirectory of /data/ where the input files are stored
     parent_directory : "earth_system_models/CMIP6"
-    model_name : "MIROC6"
-    # Dimension name along which the processing function shall be applied
+    # Dimension name along which the processing function shall be applied (e.g. "member")
     dimension : "member"
+    # Indices which shall be loaded and renamed
     indices :
       AMO :
-        file_name : "AMO_anomalies_MIROC.nc"
+        file_name : "AMO_anomalies_ACCESS.nc"
         original_var_name : "tos"
-        new_var_name : &state_1 "atlatic-multidecadel-oscillation"
+        new_var_name : &state_1 "AMO"
       NAO :
-        file_name : "NAO_ensemble_norm_MIROC.nc"
+        file_name : "NAO_ensemble_norm_ACCESS_shuffled.nc"
         original_var_name : "psl"
-        new_var_name : &state_2 "north-atlantic-oscillation-station-based"
+        new_var_name : &state_2 "NAO_ST"
 
 
 ## RANDOM SETTING USED FOR THE RANDOM VARIABLE
@@ -33,28 +59,42 @@ random_setup :
     seed : &seed 39266
     # Varaince of the randomly initialized latent variable
     random_variance : &random_variance  1
-    number_random_variables : 3
+    # List of the names of the latent variables.
+    # NOTE: Make sure, that the nodes (&xxx) are also mentioned in the ``state_variables``.
+    #       Otherwise they will not be used in the kalman function
     name_random_variables :
         - &random_1 "latent1"
-        # - &random_2 "latent2"
-        # - &random_3 "latent3"
+        - &random_2 "latent2"
+        - &random_3 "latent3"
+    # 1) If the random variables shall be added at once, set iterative to False
+    # 2) If the random variables shall be added iteratively, set iterative to True
+    #    Each random variable will be added iteratively to the input data
+    #    The order of the random variables is the same as in the list ``name_random_variables``
+    #    The first iteration will use the original input data with the first random variable
+    #    The next iterations will use the results of the previous iteration and add the next random variable
+    #    The number of iterations is defined by the length of the list ``name_random_variables``
+    iterative : True
 
 ## SETTINGS FOR KALMAN SEM
 kalman_setup :
+    # Processing function can be e.g. pipeline.xarray_Kalman_SEM or pipeline.xarray_Kalman_SEM_full_output
     processing_function : "pipeline.xarray_Kalman_SEM"
     # iterations of the kalman SEM
     nb_iter_SEM : &nb_iter_SEM 50
-    # observation variables
+    # observation variables (use nodes here)
     observation_variables : &observation_variables
         - *state_1
         - *state_2
-    # state variables
+    # state variables (use nodes here)
     state_variables : &state_variables
         - *state_1
         - *state_2
         - *random_1
-        # - *random_2
-        # - *random_3
+        - *random_2
+        - *random_3
+    # variance of the observed components
+    # (observation uncertainty)
+    variance_obs_comp: 0.0001
 
 # arguments used for the processing function which is called using the apply to multiple_sub_datasets
 function_setup :
