@@ -275,16 +275,12 @@ with start_run(experiment_id=ExperimentID) as run:
     KalmanFile = SubdataPath / f"{run_name}_kalman.nc"
 
     # log all settings and file locations.
-    log_params(
-        dict(
-            ModelFunction=model_function.__name__,
-            KalmanFunction=processing_function.__name__,
-        )
-    )
     log_params(kalman_setup)
     log_params(parameter_setup)
     log_params(
         dict(
+            ModelFunction=model_function.__name__,
+            KalmanFunction=processing_function.__name__,
             SettingsFile=SettingsPath.relative_to(RepoPath).as_posix(),
             ParameterSettingsFile=ParameterSettingsPath.relative_to(
                 RepoPath

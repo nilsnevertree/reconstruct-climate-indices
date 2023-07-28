@@ -147,6 +147,13 @@ with start_run(experiment_id=ExperimentID) as run:
 
     # log all settings and file locations.
     log_params(kalman_setup)
+    # log the model name and the dimension used
+    log_params(
+        dict(
+            ModelName=model_setup["model_name"],
+            # Dimension=model_setup["dimension"],
+        )
+    )
     log_params(
         dict(
             KalmanFunction=processing_function.__name__,
