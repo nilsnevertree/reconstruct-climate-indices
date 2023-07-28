@@ -49,7 +49,11 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
+
+# if __name__ == "__main__":
 print("Start imports.")
+
+import copy
 import itertools
 import warnings
 
@@ -64,7 +68,6 @@ from kalman_reconstruction.pipeline import (
 )
 from mlflow import end_run, log_artifact, log_params, set_tracking_uri, start_run
 from tqdm import tqdm
-
 
 print("Done!")
 
@@ -168,12 +171,10 @@ except Exception as e:
 print(f"Model_function is:{model_function}")
 print(f"processing_function is:{processing_function}")
 
-
 def product_dict(**kwargs):
     keys = kwargs.keys()
     for instance in itertools.product(*kwargs.values()):
         yield dict(zip(keys, instance))
-
 
 # create all the experiment setups
 experiment_setups = dict()
@@ -217,7 +218,6 @@ if "modified_settings" in model_setup:
 else:
     print("No 'modified_settings' dictionary was provided in the ``model_setup``.")
 
-
 # If no change is given : raise error!
 if not bool(experiment_setups):  # if dictornary is empty
     raise NotImplementedError(
@@ -232,7 +232,6 @@ except:
 
 # all experiment settings are made up by the all combinations of the experiment setups lists.
 experiment_settings = list(product_dict(**experiment_setups))
-
 
 print("------------\nStart tracking of the experiment!\n------------\n")
 set_tracking_uri(RepoPath / MlflowPath)
@@ -277,6 +276,7 @@ with start_run(experiment_id=ExperimentID) as run:
     # log all settings and file locations.
     log_params(kalman_setup)
     log_params(parameter_setup)
+    log_params(dict(Iterative=random_setup["iterative"]))
     log_params(
         dict(
             ModelFunction=model_function.__name__,
@@ -333,35 +333,86 @@ with start_run(experiment_id=ExperimentID) as run:
 
     # Create random variables as needed
     input_kalman = experiments.copy()
+
+    # If user decided  to add random variables all at once (not iteratively)
     rng_seed = random_setup["seed"]
-    for random_var in random_setup["name_random_variables"]:
-        rng = np.random.default_rng(seed=rng_seed)
-        add_random_variable(
-            ds=input_kalman,
-            var_name=random_var,
-            random_generator=rng,
-            variance=random_setup["random_variance"],
+    if random_setup["iterative"] != True:
+        for random_var in random_setup["name_random_variables"]:
+            rng = np.random.default_rng(seed=rng_seed)
+            add_random_variable(
+                ds=input_kalman,
+                var_name=random_var,
+                random_generator=rng,
+                variance=random_setup["random_variance"],
+            )
+            rng_seed += 1
+
+        print(
+            f"Run {processing_function.__name__} for : {function_setup['func_kwargs']['nb_iter_SEM']} iterations"
         )
-        rng_seed += 1
+        # #### Run the ``xarray_Kalman_SEM`` function from the ``pipeline`` library on all experiment setups.
+        #
+        # The ``run_function_on_multiple_subdatasets`` function allows to run the input function on all ``subdatasets`` specified by the ``subdataset_selections``. In this case these selections are given by the ``experiment_settings``.
 
-    print(
-        f"Run {processing_function.__name__} for : {function_setup['func_kwargs']['nb_iter_SEM']} iterations"
-    )
-    # #### Run the ``xarray_Kalman_SEM`` function from the ``pipeline`` library on all experiment setups.
-    #
-    # The ``run_function_on_multiple_subdatasets`` function allows to run the input function on all ``subdatasets`` specified by the ``subdataset_selections``. In this case these selections are given by the ``experiment_settings``.
+        experiments_kalman = run_function_on_multiple_subdatasets(
+            processing_function=processing_function,
+            parent_dataset=input_kalman,
+            subdataset_selections=experiment_settings,
+            func_args=function_setup["func_args"],
+            func_kwargs=function_setup["func_kwargs"],
+        )
+        print("Done!")
+        # ---- Save Files ----
+        print("Save kalman file.")
+        experiments_kalman.to_netcdf(KalmanFile)
+    else:
+        # choose the base state variables as the ones not in the random variables
+        base_state_variables = [
+            var
+            for var in kalman_setup["state_variables"]
+            if var not in random_setup["name_random_variables"]
+        ]
+        base_function_setup = copy.deepcopy(function_setup)
+        current_state_variables = base_state_variables
+        # add the random variables iteratively
+        for random_var in random_setup["name_random_variables"]:
+            # update the random number generator
 
-    experiments_kalman = run_function_on_multiple_subdatasets(
-        processing_function=processing_function,
-        parent_dataset=input_kalman,
-        subdataset_selections=experiment_settings,
-        func_args=function_setup["func_args"],
-        func_kwargs=function_setup["func_kwargs"],
-    )
-    print("Done!")
-    # ---- Save Files ----
-    print("Save kalman file.")
-    experiments_kalman.to_netcdf(KalmanFile)
+            rng = np.random.default_rng(seed=rng_seed)
+            add_random_variable(
+                ds=input_kalman,
+                var_name=random_var,
+                random_generator=rng,
+                variance=random_setup["random_variance"],
+            )
+            rng_seed += 1
+            # update the state_variables
+            current_state_variables.append(random_var)
+            current_function_setup = copy.deepcopy(base_function_setup)
+            current_function_setup["func_kwargs"][
+                "state_variables"
+            ] = current_state_variables
+            print(
+                f"Run {processing_function.__name__} for : {function_setup['func_kwargs']['nb_iter_SEM']} iterations"
+            )
+            # #### Run the ``xarray_Kalman_SEM`` function from the ``pipeline`` library on all experiment setups.
+            #
+            # The ``run_function_on_multiple_subdatasets`` function allows to run the input function on all ``subdatasets`` specified by the ``subdataset_selections``. In this case these selections are given by the ``experiment_settings``.
+
+            experiments_kalman = run_function_on_multiple_subdatasets(
+                processing_function=processing_function,
+                parent_dataset=input_kalman,
+                subdataset_selections=experiment_settings,
+                func_args=current_function_setup["func_args"],
+                func_kwargs=current_function_setup["func_kwargs"],
+            )
+            print("Done!")
+            # ---- Save Files ----
+            print("Save kalman file.")
+            experiments_kalman.to_netcdf(
+                SubdataPath / f"{run_name}_{random_var}.nc"
+            )
+        experiments_kalman.to_netcdf(KalmanFile)
     print("Done!")
 
 end_run()
