@@ -3,8 +3,9 @@
 ## ==================
 mlflow_setup:
   # this sets the experiment ID into which the experiment shall be logged
-  experiment_id : 170294056335565559
+  experiment_id : false
+  experiment_name : false
   # this sets the sub path of ./data/ into which the results shall be passed
-  subdata_path : "earth_system_models/processed"
+  subdata_path : false
   # this sets the path where the mlruns files are stored and accessed
   mlflow_path : "mlruns"
