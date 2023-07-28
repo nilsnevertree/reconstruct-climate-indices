@@ -1,12 +1,12 @@
 """
 This script allows to run multiple experiments with different settings on the CMIP6 data.
 For each experiment the Kalman-SEM is applied using the ``xarray_Kalman_SEM`` functions from the ``kalman_reconstruction`` library.
-THe input data, result data and settings are stored in the directory specifed by the ``mlflow_setup`` dictionary in the ``mlflow_setup.yaml`` file.
+THe input data, result data and settings are stored in the directory specified by the ``mlflow_setup`` dictionary in the ``mlflow_setup.yaml`` file.
 
 The script is designed to be run from the command line using the ``python parameter_experiments.py`` command.
 The script will then ask the user to confirm the experiment setups and then start the tracking of the experiment using ``mlflow``.
 The mlflow library is used to track the experiment.
-For each mlflow run initiliazed by this script, the following data will be stored in the directory given by the ``mlflow_setup`` dictionary in the ``mlflow_setup.yaml`` file:
+For each mlflow run initialized by this script, the following data will be stored in the directory given by the ``mlflow_setup`` dictionary in the ``mlflow_setup.yaml`` file:
 - The input Dataset created by the idealized model function chosen in the general_setup.yaml file.
 - The output Dataset created by the Kalman-SEM function chosen in the general_setup.yaml file.
 - A copy of the ``general_setup.yaml`` provided to the script.
@@ -70,7 +70,7 @@ The ``general_setup.yaml`` file contains the following information:
     - ``func_args`` : The arguments of the Kalman-SEM function.
     - ``func_kwargs`` : The settings of the Kalman-SEM function.
 
-        
+
 NOTE:
     - Make sure that the RepoPath is correct!
     - Make sure that ExperimentID exists!
@@ -79,10 +79,12 @@ NOTE:
     - If iterative is True, for each random variable a new child run will be created by mlflow.
       The results of each child run will be stored in a own directory in the same subdata_path directory as the parent run.
 
-""" 
+"""
 
 import argparse
+
 from pathlib import Path
+
 
 def get_first_lines(docstring, line_number):
     """Return the first lines of a docstring."""
@@ -92,10 +94,11 @@ def get_first_lines(docstring, line_number):
     lines = docstring.strip().splitlines()
     return "\n".join(lines[:line_number])
 
+
 parser = argparse.ArgumentParser(
     description=get_first_lines(__doc__, 4),
-    formatter_class= argparse.ArgumentDefaultsHelpFormatter,
-    )
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+)
 
 parser.add_argument(
     "--general_path",
@@ -111,10 +114,11 @@ parser.add_argument(
 args = parser.parse_args()
 
 if __name__ == "__main__":
-
     print("Start imports.")
     import itertools
     import warnings
+
+    from typing import Any, Dict, List, Optional, Tuple, Union
 
     import numpy as np
     import xarray as xr
@@ -124,18 +128,15 @@ if __name__ == "__main__":
         add_random_variable,
         all_dims_as_choords,
         expand_and_assign_coords,
-        run_function_on_multiple_subdatasets,
         from_standard_dataset,
+        run_function_on_multiple_subdatasets,
     )
     from mlflow import end_run, log_artifact, log_params, set_tracking_uri, start_run
-    from mlflow.utils.mlflow_tags import MLFLOW_PARENT_RUN_ID
     from mlflow.tracking import MlflowClient
+    from mlflow.utils.mlflow_tags import MLFLOW_PARENT_RUN_ID
     from tqdm import tqdm
-    from typing import Union, List, Tuple, Dict, Any, Optional
-
 
     print("Done!")
-
 
     # Verify the Path
     ThisPath = Path(__file__)
@@ -154,9 +155,6 @@ if __name__ == "__main__":
     print("------------\nLoad Settings from files!\n------------\n")
     general_path = RepoPath / Path(args.general_path)
     mlflow_path = RepoPath / Path(args.mlflow_path)
-
-
-
 
     # LOAD THE MLFLOW SETUP FILES
     with open(mlflow_path, "r") as stream:
@@ -191,7 +189,7 @@ if __name__ == "__main__":
         ExperimentID = client.create_experiment(ExperimentName)
     except:
         ExperimentID = client.get_experiment_by_name(ExperimentName).experiment_id
-    ###########	
+    ###########
     #  IMPORT THE KALMAN FUNCTION
     try:
         # NOTE: this needs to be updated manually available processing functions
@@ -233,15 +231,15 @@ if __name__ == "__main__":
     print("------------\nStart tracking of the experiment!\n------------\n")
 
     def save_run_information(
-        general_setup : dict, 
-        mlflow_setup : dict, 
-        kalman_setup : dict, 
-        run_name : str, 
-        run_id : int,
-        ) -> Tuple[Path, Path]:
+        general_setup: dict,
+        mlflow_setup: dict,
+        kalman_setup: dict,
+        run_name: str,
+        run_id: int,
+    ) -> Tuple[Path, Path]:
         """
         Save the run information in the corresponding files.
-        
+
         Parameters
         ----------
         general_setup : dict
@@ -265,7 +263,7 @@ if __name__ == "__main__":
         Notes
         -----
         The function saves the following files:
-            - ``{run_name}_setup.yaml`` : The general setup dictionary. 
+            - ``{run_name}_setup.yaml`` : The general setup dictionary.
             - ``{run_name}_mlflow_setup.yaml`` : The mlflow setup dictionary.
             - ``{run_name}_kalman_setup.yaml`` : The kalman setup dictionary.
             - ``{run_name}_input.nc`` : The input file.
@@ -284,33 +282,39 @@ if __name__ == "__main__":
 
         # log all settings and file locations.
         for key in kalman_setup:
-            client.log_param(run_id = run_id, key = key, value = kalman_setup[key])
+            client.log_param(run_id=run_id, key=key, value=kalman_setup[key])
         # log the model name and the dimension used
-        client.log_param(run_id = run_id, 
-                key = "ModelName",
-                value = model_setup["model_name"],
-            )
-        client.log_param(run_id = run_id, 
-                key = "KalmanFunction",
-                value = processing_function.__name__,
+        client.log_param(
+            run_id=run_id,
+            key="ModelName",
+            value=model_setup["model_name"],
         )
-        client.log_param(run_id = run_id,
-                key = "SettingsFile",
-                value = SettingsPath.relative_to(RepoPath).as_posix(),
+        client.log_param(
+            run_id=run_id,
+            key="KalmanFunction",
+            value=processing_function.__name__,
         )
-        client.log_param(run_id = run_id,
-                key = "KalmanSettingsFile",
-                value = KalmanSettingsPath.relative_to(RepoPath).as_posix(),
+        client.log_param(
+            run_id=run_id,
+            key="SettingsFile",
+            value=SettingsPath.relative_to(RepoPath).as_posix(),
         )
-        client.log_param(run_id = run_id,
-                key = "InputFile",
-                value = InputFile.relative_to(RepoPath).as_posix(),
+        client.log_param(
+            run_id=run_id,
+            key="KalmanSettingsFile",
+            value=KalmanSettingsPath.relative_to(RepoPath).as_posix(),
         )
-        client.log_param(run_id = run_id,
-                key = "KalmanFile",
-                value = KalmanFile.relative_to(RepoPath).as_posix(),
+        client.log_param(
+            run_id=run_id,
+            key="InputFile",
+            value=InputFile.relative_to(RepoPath).as_posix(),
         )
-        
+        client.log_param(
+            run_id=run_id,
+            key="KalmanFile",
+            value=KalmanFile.relative_to(RepoPath).as_posix(),
+        )
+
         with open(SettingsPath, "w") as yaml_file:
             yaml.dump(general_setup, yaml_file, default_flow_style=False)
         with open(MlflowSettingsPath, "w") as yaml_file:
@@ -322,8 +326,6 @@ if __name__ == "__main__":
         client.log_artifact(run_id, KalmanSettingsPath.as_posix())
 
         return InputFile, KalmanFile
-
-
 
     ############
     # Create the parent run
@@ -384,7 +386,6 @@ if __name__ == "__main__":
     # make sure all dims are also choords!
     model_dataset = all_dims_as_choords(model_dataset)
 
-
     subdataset_selections = [
         {f"{model_setup['dimension']}": idx}
         for idx in model_dataset[model_setup["dimension"]].values
@@ -397,9 +398,7 @@ if __name__ == "__main__":
     except:
         raise UserWarning(f"User stopped the code before tracking started.")
 
-
-
-    if random_setup['iterative'] != True :
+    if random_setup["iterative"] != True:
         print("Non-Iterative Process initialized!\nAdd all latent variables at once.")
         current_run = parent_run
         print("Done!")
@@ -439,36 +438,36 @@ if __name__ == "__main__":
         print("Save kalman file.")
         kalman_SEM_result.to_netcdf(KalmanFile)
         print("Done!")
-    else : 
+    else:
         print("Iterative Process initialized!\nAdd latent variables one by one.")
         # store parent Input file
         model_dataset.to_netcdf(InputFile)
         # idx of first random variable in the state variables
-        idx_first_random_var_state = len(parent_state_variabels) - len(parent_random_variables)
-        current_state_variabels = parent_state_variabels[:idx_first_random_var_state] 
+        idx_first_random_var_state = len(parent_state_variabels) - len(
+            parent_random_variables
+        )
+        current_state_variabels = parent_state_variabels[:idx_first_random_var_state]
 
         # Iteratively run the Kalman SEM and add random variables one by one
         rng_seed = random_setup["seed"]
-        for idx, random_var in enumerate(random_setup['name_random_variables']) : 
+        for idx, random_var in enumerate(random_setup["name_random_variables"]):
             # create the child run
             current_run = client.create_run(
-                    experiment_id=ExperimentID,
-                    tags={
-                        MLFLOW_PARENT_RUN_ID: parent_run.info.run_id
-                    }
-                )
-                    # save the run information of the child run:
+                experiment_id=ExperimentID,
+                tags={MLFLOW_PARENT_RUN_ID: parent_run.info.run_id},
+            )
+            # save the run information of the child run:
             run_name = current_run.info.run_name
             run_id = current_run.info.run_id
-            
+
             # modify the setup dictionaries
             # set the state_variables to the current state variables
             current_state_variabels.append(random_var)
-            kalman_setup['state_variables'] = current_state_variabels
+            kalman_setup["state_variables"] = current_state_variabels
             # set the random_variables to the current random variables
-            random_setup['name_random_variables']  =  parent_random_variables[:idx+1]
-            random_setup['seed'] =  rng_seed
-            function_setup['func_kwargs']['state_variables'] = current_state_variabels
+            random_setup["name_random_variables"] = parent_random_variables[: idx + 1]
+            random_setup["seed"] = rng_seed
+            function_setup["func_kwargs"]["state_variables"] = current_state_variabels
 
             function_setup["func_kwargs"]["ds"] = False
             # update the general setup
@@ -476,7 +475,6 @@ if __name__ == "__main__":
             # general_setup['kalman_setup'] = kalman_setup
             # general_setup['random_setup'] = random_setup
             # general_setup['function_setup'] = function_setup
-            
 
             InputFile, KalmanFile = save_run_information(
                 general_setup=general_setup,
@@ -485,25 +483,27 @@ if __name__ == "__main__":
                 run_name=run_name,
                 run_id=run_id,
             )
-            
+
             # in the first iteration use the original input file
-            if idx == 0 :
+            if idx == 0:
                 print("Use original input file.")
                 current_dataset = model_dataset
-            else :
+            else:
                 print("Use previous kalman file as input file.")
                 # convert the dataset from the standard dataset to dataset containing all state variables as data variables
                 current_dataset = from_standard_dataset(result)
-                current_dataset = current_dataset.drop_vars(["state_name_copy", "kalman_iteration"])
+                current_dataset = current_dataset.drop_vars(
+                    ["state_name_copy", "kalman_iteration"]
+                )
             # add the random variable
             print(f"Add random variable {random_var}.")
             rng = np.random.default_rng(seed=rng_seed + idx)
             add_random_variable(
-                    ds=current_dataset,
-                    var_name=random_var,
-                    random_generator=rng,
-                    variance=random_setup["random_variance"],
-                )
+                ds=current_dataset,
+                var_name=random_var,
+                random_generator=rng,
+                variance=random_setup["random_variance"],
+            )
             print("Save input file.")
             current_dataset.to_netcdf(InputFile)
             print("Done!")

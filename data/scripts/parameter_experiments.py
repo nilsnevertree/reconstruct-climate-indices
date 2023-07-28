@@ -127,6 +127,7 @@ from kalman_reconstruction.pipeline import (
 from mlflow import end_run, log_artifact, log_params, set_tracking_uri, start_run
 from tqdm import tqdm
 
+
 print("Done!")
 
 # Verify the Path
@@ -229,10 +230,12 @@ except Exception as e:
 print(f"Model_function is:{model_function}")
 print(f"processing_function is:{processing_function}")
 
+
 def product_dict(**kwargs):
     keys = kwargs.keys()
     for instance in itertools.product(*kwargs.values()):
         yield dict(zip(keys, instance))
+
 
 # create all the experiment setups
 experiment_setups = dict()
@@ -467,9 +470,7 @@ with start_run(experiment_id=ExperimentID) as run:
             print("Done!")
             # ---- Save Files ----
             print("Save kalman file.")
-            experiments_kalman.to_netcdf(
-                SubdataPath / f"{run_name}_{random_var}.nc"
-            )
+            experiments_kalman.to_netcdf(SubdataPath / f"{run_name}_{random_var}.nc")
         experiments_kalman.to_netcdf(KalmanFile)
     print("Done!")
 
