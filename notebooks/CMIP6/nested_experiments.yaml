@@ -1,0 +1,46 @@
+# This file is used to identify the nested sub runs for CMIP6
+# The experiments are defined in the following way:
+# parent_run_name is used as the key (The name of the parent run)
+# child_runs : The list of child runs which were used for the nested experiment
+
+
+judicious-vole-738 :
+  child_runs :
+    - "rogue-skink-679"
+    - "likeable-sloth-628"
+    - "awesome-shark-455"
+agreeable-snipe-216 :
+  child_runs :
+    - "bouncy-wasp-90"
+    - "serious-fawn-42"
+    - "thundering-fly-251"
+fortunate-goat-245 :
+  child_runs :
+    - "adorable-ape-160"
+    - "awesome-wren-430"
+    - "receptive-cub-518"
+rumbling-dolphin-112 :
+  child_runs :
+    - "selective-crane-979"
+    - "youthful-sponge-296"
+    - "merciful-penguin-758"
+popular-seal-111 :
+  child_runs :
+    - "awesome-dolphin-527"
+    - "polite-bass-407"
+    - "hilarious-croc-90"
+efficient-turtle-538 :
+  child_runs :
+    - "learned-swan-198"
+    - "adventurous-pig-715"
+    - "fun-frog-750"
+sedate-toad-482 :
+  child_runs :
+    - "mysterious-fox-204"
+    - "masked-mouse-594"
+    - "stately-gnat-746"
+fearless-ram-101 :
+  child_runs :
+    - "selective-pig-136"
+    - "thoughtful-tern-899"
+    - "loud-hawk-940"

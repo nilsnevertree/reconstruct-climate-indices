@@ -1,7 +1,9 @@
 import numpy as np
 import pytest
 
-from reconstruct_climate_indices.statistics import my_mean
+from numpy.testing import assert_allclose
+
+from reconstruct_climate_indices.statistics import my_mean, smooth_in_freq_space
 
 
 # Test data

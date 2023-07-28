@@ -1,9 +1,10 @@
+# %%
 from typing import Dict, Tuple, TypedDict, Union
 
 import numpy as np
 import xarray as xr
 
-from scipy import signal
+from scipy import fft, signal
 from sklearn.linear_model import LinearRegression
 
 
@@ -493,3 +494,82 @@ def xarray_dataset_welch(
             ds[var], dim=dim, new_dim=new_dim, welch_kwargs=welch_kwargs
         )
     return res
+
+
+import numpy as np
+
+# %%
+from scipy import fft
+
+
+def smooth_in_freq_space(
+    x: np.ndarray, fft_dim: int = 1, smooth_dim: int = 0
+) -> np.ndarray:
+    """
+    Smooths an array along one dimension using median filtering in the
+    frequency domain.
+
+    The function applies a median filter in the frequency domain to smooth the input array along the specified dimension.
+
+    Parameters:
+        x (np.ndarray): The input array to be smoothed.
+        fft_dim (int, optional): The dimension along which the FFT will be computed. Default is 1.
+        smooth_dim (int, optional): The dimension along which the smoothing will be applied. Default is 0.
+
+    Returns:
+        np.ndarray: The smoothed array.
+
+    Example:
+        # Smooth an array along the first dimension using median filtering in the frequency domain
+        >>> import numpy as np
+    """
+    if fft_dim >= smooth_dim:
+        res = fft.irfft(
+            np.median(fft.rfft(x, axis=fft_dim), axis=smooth_dim), axis=fft_dim - 1
+        )
+    else:
+        res = fft.irfft(
+            np.median(np.abs(fft.rfft(x, axis=fft_dim)), axis=smooth_dim), axis=fft_dim
+        )
+    return res
+
+
+# # %%
+# from numpy.testing import assert_allclose
+# import matplotlib.pyplot as plt
+
+# # def test_smooth_in_freq_space(x):
+# #     # Test case 3: Concatenation of three sinus functions with different frequencies
+# #     x3 =  np.array((
+# #         np.sin(2 * np.pi * 0.2 * np.linspace(0, 10*np.pi, 1000)),
+# #         np.sin(2 * np.pi * 0.2 * np.linspace(0, 10*np.pi, 1000)),
+# #         np.sin(2 * np.pi * 0.2 * np.linspace(0, 10*np.pi, 1000))
+# #     ))
+
+# #     expected_result3 = np.sin(2 * np.pi * 0.1 * np.linspace(0, 10*np.pi, 1000))
+# #     result3 = smooth_in_freq_space(x3, fft_dim=0, smooth_dim=1)
+# #     return x3, result3
+# #     #assert_allclose(result3, expected_result3, atol=1e-6)
+# n = 10000
+# p = 30
+# x_values = np.ones((p, n))* np.linspace(0, 50*2*np.pi, n)
+# random_values = np.random.random_integers(low= -20, high = 100, size = (p, n))
+# random_phase = 0.89589* np.array([x_values[0,:]*0 + 1 + rn for rn in random_values[:,0]])
+# x3 = x_values*0+ random_values*0.01 + (
+#         np.sin(2 * np.pi * 0.03 * (x_values - random_phase))
+#         + np.sin(2 * np.pi * 0.07 * (x_values - random_phase))
+#         + np.sin(2 * np.pi * 0.01 * x_values)
+# )
+
+
+# fig, axs = plt.subplots(5, 1)
+# for i, x3_temp in enumerate(x3[0:4,:]) :
+#     axs[i].plot(x3_temp)
+
+# axs[i+1].plot(smooth_in_freq_space(x3, fft_dim=1, smooth_dim=0))
+# # %%
+
+# plt.loglog(np.abs(fft.rfft(x3, axis=1)).T, color = [0.5,0.5,0.5], alpha = 0.1)
+# plt.loglog(np.mean(np.abs((fft.rfft(x3, axis=1))), axis = 0).T)
+# plt.loglog(np.median(np.abs((fft.rfft(x3, axis=1))), axis = 0).T)
+# # %%
