@@ -1,4 +1,4 @@
-name: kalman_reconstruction_docs
+name: reconstruct_climate_indices_docs
 dependencies:
    - python=3.10
    # If your docs code examples depend on other packages add them here
@@ -14,6 +14,7 @@ dependencies:
    - ipykernel
    - pandoc
    - pip
+   - yaml
    - pip:
      - docrep<=0.2.7
      - nbsphinx
