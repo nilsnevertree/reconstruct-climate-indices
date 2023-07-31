@@ -2,6 +2,9 @@ reconstruct-climate-indices
 ==============================
 Project to reconstruct hidden variabels from climate indices using Kalman algorithms.
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Documentation Status](https://readthedocs.org/projects/reconstruct-climate-indices/badge/?version=latest)](https://reconstruct-climate-indices.readthedocs.io/en/latest/?badge=latest)
+
 Project Organization
 ------------
     │   environment.yml
