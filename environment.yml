@@ -6,6 +6,7 @@ dependencies:
   - pytest
   # Examples (remove and add as needed)
   - pip
+  - setuptools
   - numpy
   - scipy
   - pandas
@@ -13,3 +14,10 @@ dependencies:
   # Jupyter
   - jupyter
   - jupyterlab
+  - yaml 
+  - mlflow
+  - scikit-learn
+  - tqdm
+  - pip :
+    # The kalman_reconstruction package is not yet available on PyPI, so we install it directly from GitHub
+    - "git+https://github.com/nilsnevertree/kalman-reconstruction-partially-observed-systems"
