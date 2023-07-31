@@ -14,7 +14,7 @@ dependencies:
   # Jupyter
   - jupyter
   - jupyterlab
-  - yaml 
+  - yaml
   - mlflow
   - scikit-learn
   - tqdm

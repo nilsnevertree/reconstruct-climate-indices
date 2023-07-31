@@ -80,8 +80,10 @@ import argparse
 
 from pathlib import Path
 
+
 def main():
     """Run the parameter_experiments script."""
+
     def get_first_lines(docstring, line_number):
         """Return the first lines of a docstring."""
         if not docstring:
@@ -89,7 +91,6 @@ def main():
 
         lines = docstring.strip().splitlines()
         return "\n".join(lines[:line_number])
-
 
     parser = argparse.ArgumentParser(
         description=get_first_lines(__doc__, 4),
@@ -127,7 +128,6 @@ def main():
     )
     from mlflow import end_run, log_artifact, log_params, set_tracking_uri, start_run
     from tqdm import tqdm
-
 
     print("Done!")
 
@@ -231,12 +231,10 @@ def main():
     print(f"Model_function is:{model_function}")
     print(f"processing_function is:{processing_function}")
 
-
     def product_dict(**kwargs):
         keys = kwargs.keys()
         for instance in itertools.product(*kwargs.values()):
             yield dict(zip(keys, instance))
-
 
     # create all the experiment setups
     experiment_setups = dict()
@@ -471,7 +469,9 @@ def main():
                 print("Done!")
                 # ---- Save Files ----
                 print("Save kalman file.")
-                experiments_kalman.to_netcdf(SubdataPath / f"{run_name}_{random_var}.nc")
+                experiments_kalman.to_netcdf(
+                    SubdataPath / f"{run_name}_{random_var}.nc"
+                )
             experiments_kalman.to_netcdf(KalmanFile)
         print("Done!")
 
@@ -480,6 +480,7 @@ def main():
     print(f"ExperimentID : {ExperimentID}")
     print(f"RunName : {run_name}")
     print(f"RunID : {run_id}")
+
 
 if __name__ == "__main__":
     main()

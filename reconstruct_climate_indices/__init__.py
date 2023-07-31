@@ -1,5 +1,1 @@
-from reconstruct_climate_indices import (
-    idealized_ocean,
-    statistics,
-    data_scripts,
-)  
+from reconstruct_climate_indices import data_scripts, idealized_ocean, statistics

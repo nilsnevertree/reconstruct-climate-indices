@@ -27,9 +27,7 @@ project = "reconstruct-climate-indices"
 author = "nilsnevertree"
 
 # Add your repository URL
-github_url = (
-    f"https://github.com/nilsnevertree/reconstruct-climate-indices"
-)
+github_url = f"https://github.com/nilsnevertree/reconstruct-climate-indices"
 
 # If your documentation needs a minimal Sphinx version, state it here.
 # needs_sphinx = '1.0'

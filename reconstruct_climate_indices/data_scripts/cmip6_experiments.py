@@ -95,6 +95,7 @@ import argparse
 
 from pathlib import Path
 
+
 def main():
     def get_first_lines(docstring, line_number):
         """Return the first lines of a docstring."""
@@ -103,7 +104,6 @@ def main():
 
         lines = docstring.strip().splitlines()
         return "\n".join(lines[:line_number])
-
 
     parser = argparse.ArgumentParser(
         description=get_first_lines(__doc__, 4),
@@ -544,6 +544,7 @@ def main():
     print(f"ExperimentID : {ExperimentID}")
     print(f"RunName : {run_name}")
     print(f"RunID : {run_id}")
+
 
 if __name__ == "__main__":
     main()

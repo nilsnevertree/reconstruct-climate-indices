@@ -34,6 +34,7 @@ Where ``run_id`` is e.g. *553cbd3bc6ce44028c8daad12647c306*
 
 # %%
 
+
 def main():
     """Main function to run the script."""
     print("Start imports.")
@@ -51,16 +52,13 @@ def main():
 
     from reconstruct_climate_indices.idealized_ocean import AMO_oscillatory_ocean
 
-
     print("Done!")
-
 
     # %%
     def product_dict(**kwargs):
         keys = kwargs.keys()
         for instance in itertools.product(*kwargs.values()):
             yield dict(zip(keys, instance))
-
 
     # %% [markdown]
     # ## Settings
@@ -131,7 +129,6 @@ def main():
         dEAP=0.1,
         cNAOvsEAP=0,
     )
-
 
     # modified_arguments = ["dNAO", "per0"]
     # factors = np.array([0.1, 0.5, 1, 2, 5])
@@ -262,6 +259,7 @@ def main():
     print("------------\nTracking Done!------------\n")
     print(f"ExperimentID : {ExperimentID}")
     print(f"RunID : {run_id}")
+
 
 if __name__ == "__main__":
     main()
