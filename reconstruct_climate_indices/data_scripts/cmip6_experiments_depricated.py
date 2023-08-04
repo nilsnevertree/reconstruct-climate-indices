@@ -16,6 +16,7 @@ run_name = "sassy-zebra-42"             # This name is automatically generated b
 subdata_path = "your_subdata_path"
 
 Folder structure
+'''
     └───RepoPath
         └───data
             └───scripts
@@ -31,7 +32,7 @@ Folder structure
                     │    sassy-zebra-42_kalman.nc               # This file contains the output Dataset created by the Kalman-SEM function.
                     │    sassy-zebra-42_general_setup.yaml      # This file can be used to reproduce the experiment!
                     │    ...
-
+'''
 
 In the ``mlflow_setup.yaml`` file the user can set the following information:
     - ``mlflow_path`` : The path to the directory in which the mlflow tracking uri shall be used.
@@ -86,34 +87,35 @@ import argparse
 from pathlib import Path
 
 
-def get_first_lines(docstring, line_number):
-    """Return the first lines of a docstring."""
-    if not docstring:
-        return ""
+def main():
+    """Run the script."""
 
-    lines = docstring.strip().splitlines()
-    return "\n".join(lines[:line_number])
+    def get_first_lines(docstring, line_number):
+        """Return the first lines of a docstring."""
+        if not docstring:
+            return ""
 
+        lines = docstring.strip().splitlines()
+        return "\n".join(lines[:line_number])
 
-parser = argparse.ArgumentParser(
-    description=get_first_lines(__doc__, 4),
-    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-)
+    parser = argparse.ArgumentParser(
+        description=get_first_lines(__doc__, 4),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
 
-parser.add_argument(
-    "--general_path",
-    default=Path("data") / Path("setups_default") / "cmip6_setup.yaml",
-    help="path relative to REPO_PATH to the general setup stored in a .yaml file",
-)
-parser.add_argument(
-    "--mlflow_path",
-    default=Path("data") / Path("setups_default") / "mlflow_setup.yaml",
-    help="path relative to REPO_PATH to the mlflow setup stored in a .yaml file",
-)
+    parser.add_argument(
+        "--general_path",
+        default=Path("data") / Path("setups_default") / "cmip6_setup.yaml",
+        help="path relative to REPO_PATH to the general setup stored in a .yaml file",
+    )
+    parser.add_argument(
+        "--mlflow_path",
+        default=Path("data") / Path("setups_default") / "mlflow_setup.yaml",
+        help="path relative to REPO_PATH to the mlflow setup stored in a .yaml file",
+    )
 
-args = parser.parse_args()
+    args = parser.parse_args()
 
-if __name__ == "__main__":
     print("Start imports.")
     import itertools
     import warnings
@@ -535,3 +537,7 @@ if __name__ == "__main__":
     print(f"ExperimentID : {ExperimentID}")
     print(f"RunName : {run_name}")
     print(f"RunID : {run_id}")
+
+
+if __name__ == "__main__":
+    main()
